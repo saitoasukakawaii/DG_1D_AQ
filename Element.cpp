@@ -16,8 +16,8 @@ Element::Element(const double &_x_l, const double &_x_r, const int &_N) :
     A = vector<double>(Np,0.);
     Q = vector<double>(Np,10.);
     c = vector<double>(Np,0.);
-//    P = vector<double>(Np,0.);
-    P = vector<double>(Np,66610.);
+    P = vector<double>(Np,0.);
+//    P = vector<double>(Np,66610.);
     phi = vector<double>(Np,0.);
     F_A = vector<double>(Np,0.);
     F_U = vector<double>(Np,0.);
