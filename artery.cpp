@@ -235,8 +235,8 @@ void Artery::Bifur_Flux()
         J(0,0) = 1/x[3];
         J(0,1) = 0;
         J(0,2) = 0;
-//        J(0,3) = -x[0]/pow(x[3],2.)-cl/x[3];    // olufsen
-        J(0,3) = -x[0]/pow(x[3],2.)+cl/x[3];
+        J(0,3) = -x[0]/pow(x[3],2.)-cl/x[3];    // olufsen
+//        J(0,3) = -x[0]/pow(x[3],2.)+cl/x[3];
         J(0,4) = 0;
         J(0,5) = 0;
 
@@ -244,8 +244,8 @@ void Artery::Bifur_Flux()
         J(1,1) = 1/x[4];
         J(1,2) = 0;
         J(1,3) = 0;
-//        J(1,4) = -x[1]/pow(x[4],2.)+cr1/x[4];   // olufsen
-        J(1,4) = -x[1]/pow(x[4],2.)-cr1/x[4];
+        J(1,4) = -x[1]/pow(x[4],2.)+cr1/x[4];   // olufsen
+//        J(1,4) = -x[1]/pow(x[4],2.)-cr1/x[4];
         J(1,5) = 0;
 
         J(2,0) = 0;
@@ -253,8 +253,8 @@ void Artery::Bifur_Flux()
         J(2,2) = 1/x[5];
         J(2,3) = 0;
         J(2,4) = 0;
-//        J(2,5) = -x[2]/pow(x[5],2.)+cr2/x[5];   // olfusen
-        J(2,5) = -x[2]/pow(x[5],2.)-cr2/x[5];
+        J(2,5) = -x[2]/pow(x[5],2.)+cr2/x[5];   // olfusen
+//        J(2,5) = -x[2]/pow(x[5],2.)-cr2/x[5];
 
         J(3,0) =  1;
         J(3,1) = -1;
@@ -346,8 +346,8 @@ void Artery::Inlet_Flux(const double &T) {
         c  = start_el.Get_c(0, x);
 
         f  = Q/x-4*c-start_el.W1L;
-//        df = c/x-Q/pow(x,2.);   // olufsen
-        df = -c/x-Q/pow(x,2.);
+        df = c/x-Q/pow(x,2.);   // olufsen
+//        df = -c/x-Q/pow(x,2.);
         if( fabs(df) < SMALL ){
             std::stringstream tmp;
             tmp << "Error in Qinflow: zero derivative in the Newton's iteration. Iteration step is: "<< iter << ".\n";
@@ -428,8 +428,8 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt)
         c = end_el.Get_c(Np-1, x);
         double Q = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms;
         f = Q/x+4*c-end_el.W2R;
-//        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)-c/x;  // olufsen
-        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)+c/x;
+        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)-c/x;  // olufsen
+//        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)+c/x;
         if( fabs(df) < SMALL ){
             throw std::runtime_error("Error in SmallTree outflow: zero derivative in the Newton's iteration.\n");
         }
@@ -712,15 +712,15 @@ void RiemannStart(Element &start_el, const double &Q_star, const int &ID){
 
         J(0,0) = 1/x[2];
         J(0,1) = 0;
-//        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
-        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
+        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
+//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
         J(0,3) = 0;
 
         J(1,0) = 0;
         J(1,1) = 1/x[3];
         J(1,2) = 0;
-//        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olufsen
-        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
+        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olufsen
+//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
 
         J(2,0) =  1;
         J(2,1) = -1;
@@ -784,15 +784,15 @@ void RiemannEnd(Element &end_el, const double &Q_star, const int &ID){
 
         J(0,0) = 1/x[2];
         J(0,1) = 0;
-//        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
-        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
+        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
+//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
         J(0,3) = 0;
 
         J(1,0) = 0;
         J(1,1) = 1/x[3];
         J(1,2) = 0;
-//        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olfusen
-        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
+        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olfusen
+//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
 
         J(2,0) =  1;
         J(2,1) = -1;
@@ -864,15 +864,15 @@ void Riemann(Element &el1, Element &el2, const int &j, const int &N_e)
 
         J(0,0) = 1/x[2];
         J(0,1) = 0;
-//        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];  // olufsen
-        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
+        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];  // olufsen
+//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
         J(0,3) = 0;
 
         J(1,0) = 0;
         J(1,1) = 1/x[3];
         J(1,2) = 0;
-//        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];  // olufsen
-        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
+        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];  // olufsen
+//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
 
         J(2,0) =  1;
         J(2,1) = -1;
