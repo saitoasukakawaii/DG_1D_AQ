@@ -16,8 +16,7 @@ Element::Element(const double &_x_l, const double &_x_r, const int &_N) :
     A = vector<double>(Np,0.);
     Q = vector<double>(Np,10.);
     c = vector<double>(Np,0.);
-//    P = vector<double>(Np,0.);
-    P = vector<double>(Np,66610.);
+    P = vector<double>(Np,0.);
     phi = vector<double>(Np,0.);
     F_A = vector<double>(Np,0.);
     F_U = vector<double>(Np,0.);
@@ -111,8 +110,8 @@ void Element::Set_c() {
 
 void Element::Set_P() {
     for (int i = 0; i < Np; i++) {
-//        P[i] = EH_r0[i]*(1-sqrt(A0[i]/A[i]));             // olufsen
-        P[i] = EH_r0[i] * (sqrt(A[i] / A0[i]) - 1);
+        P[i] = EH_r0[i]*(1-sqrt(A0[i]/A[i]));             // olufsen
+//        P[i] = EH_r0[i] * (sqrt(A[i] / A0[i]) - 1);
     }
 }
 
@@ -138,7 +137,7 @@ double Element::Get_P(const int &i, const double &A_) {
 
 double Element::Get_phi(const int &i, const double &A_) {
     assert(i >= 0 && i < Np);
-    return phi[i] = EH_r0[i]*( -A0[i]+sqrt(A0[i]*A_) )/rho;             // olufsen
+    return phi[i] = EH_r0[i]*sqrt(A0[i]*A_)/rho;             // olufsen
 //    return phi[i] = EH_r0[i]*pow(A_,1.5)/rho/3/sqrt(A0[i]);
 }
 
