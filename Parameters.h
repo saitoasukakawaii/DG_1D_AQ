@@ -20,7 +20,7 @@ const std::string FileName2 = "Geometry/geometry55.txt";
 const int N = 3;                                    // N order, N+1 point in a element
 const Jacobi1D jac(N);                              // N order element
                                             // 65536 32768
-const int tmstps = 32768;                  // The number of timesteps per period.
+const int tmstps = 65536;                  // The number of timesteps per period.
 const int plts   = 2048;                   // Number of plots per period.
 const int tmp    = 1024;
 const int Per_step = tmstps/tmp;

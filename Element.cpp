@@ -14,7 +14,8 @@ Element::Element(const double &_x_l, const double &_x_r, const int &_N) :
     r0 = vector<double>(Np,0.);
     c0 = vector<double>(Np,0.);
     A = vector<double>(Np,0.);
-    Q = vector<double>(Np,10.);
+//    Q = vector<double>(Np,10.);
+    Q = vector<double>(Np,1.);
     c = vector<double>(Np,0.);
     P = vector<double>(Np,0.);
     phi = vector<double>(Np,0.);

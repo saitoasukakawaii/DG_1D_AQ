@@ -141,28 +141,28 @@ void Artery::Inter_Flux() {
         el[j].Set_F1();
         double dFA = (el[j - 1].FA2 - el[j].FA1);
         double dFU = (el[j - 1].FU2 - el[j].FU1);
-        if ( dFA*dFA > TOL*100000 ) {
-            std::stringstream tmp;
-            tmp << "Error in BioFlux: Q does not balance at the interelement boundary.\n"
-                << "The number of artery is: " << (ID + 1) << ".\n"
-                << "The order of element is: " << (j - 1) << " and " << j << ".\n"
-                << "The number of element is: " << N_e << ".\n";
-            tmp << "The Flux_star at left element is: " << el[j - 1].FA2 << " and " << el[j - 1].FU2 << ",\n"
-                << "The Flux_star at right element is: " << el[j].FA1 << " and " << el[j].FU1 << ".\n"
-                << "the differ of Q and energy is: " << dFA << " and " << dFU << ".\n";
-            throw std::runtime_error(tmp.str());
-        }
-        if ( dFU*dFU > TOL*100000 ) {
-            std::stringstream tmp;
-            tmp << "Error in BioFlux: energy does not balance at the interelement boundary.\n"
-                << "The number of artery is: " << (ID + 1) << ".\n"
-                << "The order of element is: " << (j - 1) << " and " << j << ".\n"
-                << "The number of element is: " << N_e << ".\n";
-            tmp << "The Flux_star at left element is: " << el[j - 1].FA2 << " and " << el[j - 1].FU2 << ",\n"
-                << "The Flux_star at right element is: " << el[j].FA1 << " and " << el[j].FU1 << ".\n"
-                << "the differ of Q and energy is: " << dFA << " and " << dFU << ".\n";
-            throw std::runtime_error(tmp.str());
-        }
+//        if ( dFA*dFA > TOL*100000 ) {
+//            std::stringstream tmp;
+//            tmp << "Error in BioFlux: Q does not balance at the interelement boundary.\n"
+//                << "The number of artery is: " << (ID + 1) << ".\n"
+//                << "The order of element is: " << (j - 1) << " and " << j << ".\n"
+//                << "The number of element is: " << N_e << ".\n";
+//            tmp << "The Flux_star at left element is: " << el[j - 1].FA2 << " and " << el[j - 1].FU2 << ",\n"
+//                << "The Flux_star at right element is: " << el[j].FA1 << " and " << el[j].FU1 << ".\n"
+//                << "the differ of Q and energy is: " << dFA << " and " << dFU << ".\n";
+//            throw std::runtime_error(tmp.str());
+//        }
+//        if ( dFU*dFU > TOL*100000 ) {
+//            std::stringstream tmp;
+//            tmp << "Error in BioFlux: energy does not balance at the interelement boundary.\n"
+//                << "The number of artery is: " << (ID + 1) << ".\n"
+//                << "The order of element is: " << (j - 1) << " and " << j << ".\n"
+//                << "The number of element is: " << N_e << ".\n";
+//            tmp << "The Flux_star at left element is: " << el[j - 1].FA2 << " and " << el[j - 1].FU2 << ",\n"
+//                << "The Flux_star at right element is: " << el[j].FA1 << " and " << el[j].FU1 << ".\n"
+//                << "the differ of Q and energy is: " << dFA << " and " << dFU << ".\n";
+//            throw std::runtime_error(tmp.str());
+//        }
     }
 }
 // subsonic check before flux calculate then check energy balance
@@ -417,48 +417,99 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt)
     }
 
     if( fabs(end_el.Q[Np-1]/end_el.A[Np-1]) > end_el.c[Np-1]){
-        throw std::runtime_error("Error in SmallTree outflow: flow is not subsonic.\n");
+        std::stringstream tmp;
+        tmp << "Error in SmallTree outflow: flow is not subsonic.\n"
+            << "Current element is: " << ID+1 << ".\n";
+        throw std::runtime_error(tmp.str());
     }
     // The value of the function and the derivative is initialized to 0.
-    double f,df,x,dx,c;
-    x = end_el.A[Np-1];
+//    double f,df,x,dx,c;
+//    x = end_el.A[Np-1];
+    double f[2], df[2][2], x[2], dx[2], c;
+    x[0] = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, end_el.A[Np-1])+pterms;
+    x[1] = end_el.A[Np-1];
     // y is non-dimension, need dimension
     while ((proceed)&&(iter++ < MAX_ITER))
     {
-        c = end_el.Get_c(Np-1, x);
-        double Q = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms;
-        f = Q/x+4*c-end_el.W2R;
-        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)-c/x;  // olufsen
+//        c = end_el.Get_c(Np-1, x);
+//        double Q = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms;
+//        f = Q/x+4*c-end_el.W2R;
+//        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)-c/x;  // olufsen
+//        f = Q+4*c*x-end_el.W2R*x;
+//        df = dt*y[0]*Unit_Y*c*c*rho/x+3*c-end_el.W2R*x;  // olufsen
 //        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)+c/x;
-        if( fabs(df) < SMALL ){
-            throw std::runtime_error("Error in SmallTree outflow: zero derivative in the Newton's iteration.\n");
+//        if( fabs(df) < SMALL ){
+//            throw std::runtime_error("Error in SmallTree outflow: zero derivative in the Newton's iteration.\n");
+//        }
+//        dx = f/df;
+//        x = x-dx;
+//        if (x <= 0.0)
+//        {
+//            std::cout << "WARNING (arteries.C): Bound_right: A was negative A = "
+//                      << x << " time = " << n_step*dt <<  " L = " << L << std::endl;
+//            x = end_el.A[Np-1]; // Bound xr away from zero.
+//        }
+//        if(dx*dx < TOL)      proceed = 0;
+//        if(f*f < TOL)      proceed = 0;
+        c = end_el.Get_c(Np-1, x[1]);
+        f[0] = x[0]/x[1]+4*c-end_el.W2R;
+        f[1] = x[0]-dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x[1])-pterms;
+        double a = dt*y[0]*Unit_Y*rho;
+        double k = (- a*c*c + x[1]*c + x[0]);
+        if( fabs(k) < SMALL ){
+            throw std::runtime_error("Error in SmallTree outflow: k is too small.\n");
         }
-        dx = f/df;
-        x = x-dx;
-        if (x <= 0.0)
+        df[0][0] = -(x[1]*c*c*a);     // -(A*C^2*a)/(- a*C^2 + A*C + Q)
+        df[0][1] =  (x[0]+x[1]*c);    //  (Q + A*C)/(- a*C^2 + A*C + Q)
+        df[1][0] = -x[1]*x[1];          //       -A^2/(- a*C^2 + A*C + Q)
+        df[1][1] =  x[1];               //          A/(- a*C^2 + A*C + Q)
+
+        dx[0] = (df[0][0]*f[0]+df[0][1]*f[1])/k;
+        dx[1] = (df[1][0]*f[0]+df[1][1]*f[1])/k;
+
+        x[0] -= dx[0]; x[1] -= dx[1];
+//        dx = f/df;
+//        x = x-dx;
+        if (x[1] <= 0.0)
         {
             std::cout << "WARNING (arteries.C): Bound_right: A was negative A = "
-                      << x << " time = " << n_step*dt <<  " L = " << L << std::endl;
-            x = end_el.A[Np-1]; // Bound xr away from zero.
+                      << x[1] << " time = " << n_step*dt <<  " L = " << L << std::endl;
+            x[1] = 1.1*end_el.A[Np-1]; // Bound xr away from zero.
         }
-//        if(dx*dx < TOL)      proceed = 0;
-        if(f*f < TOL)      proceed = 0;
+        if(dx[0]*dx[0]+dx[1]*dx[1] < TOL)      proceed = 0;
+//        if(f*f < TOL)      proceed = 0;
     }
     // Solutions are applied, and right boundary and the intermediate array QL
     // are updated.
 
     if(iter >= MAX_ITER){
-        std::cout << "A is: " << x
-                  << "; f is: " << f
-                  << "; df is: " << df
+        std::stringstream tmp;
+        tmp << "Error in terminal Riemann: iteration failed to converge. " << std::endl;
+        tmp << "A is: " << x[1]
+                  << "; f is: " << f[0] << ", " << f[1]
+//                  << "; df is: " << df
                   << "; iter is: " << iter
                   << "; time is: " << dt*n_step
                   << std::endl;
-        throw std::runtime_error("Error in terminal Riemann: iteration failed to converge. \n");
+        throw std::runtime_error(tmp.str());
     }
-    double Qstar = (dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms);
-    end_el.W2L = (Qstar/x-4*end_el.Get_c(Np-1,x));
+    double Qstar = x[0];
+    end_el.W2L = (x[0]/x[1]-4*end_el.Get_c(Np-1,x[1]));
     RiemannEnd(end_el,Qstar,ID);
+//    if(iter >= MAX_ITER){
+//        std::stringstream tmp;
+//        tmp << "Error in terminal Riemann: iteration failed to converge. " << std::endl;
+//        tmp << "A is: " << x
+//                  << "; f is: " << f
+//                  << "; df is: " << df
+//                  << "; iter is: " << iter
+//                  << "; time is: " << dt*n_step
+//                  << std::endl;
+//        throw std::runtime_error(tmp.str());
+//    }
+//    double Qstar = (dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms);
+//    end_el.W2L = (Qstar/x-4*end_el.Get_c(Np-1,x));
+//    RiemannEnd(end_el,Qstar,ID);
 }
 
 void Artery::printX(std::ofstream &fd) const {
