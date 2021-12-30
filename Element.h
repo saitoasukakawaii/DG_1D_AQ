@@ -39,6 +39,8 @@ public:
     // S_A == 0, dont need
             S_U,                   // source term
             RHS_A, RHS_U,         // all value add to right
+            RHS_A_old, RHS_U_old,
+            RHS_A_oldold, RHS_U_oldold,
             k_A, k_U,             // used for Runge-Kutta(LSERK), as tmp
                                     // dont need reset for the rk4a[0]=0
             P, phi,                     // pressure

@@ -26,6 +26,10 @@ Element::Element(const double &_x_l, const double &_x_r, const int &_N) :
     k_U = vector<double>(Np,0.);
     RHS_A = vector<double>(Np,0.);
     RHS_U = vector<double>(Np,0.);
+    RHS_A_old = vector<double>(Np,0.);
+    RHS_U_old = vector<double>(Np,0.);
+    RHS_A_oldold = vector<double>(Np,0.);
+    RHS_U_oldold = vector<double>(Np,0.);
     EH_r0 = vector<double>(Np,0.);
     dr0dx = vector<double>(Np,0.);
     dfdr0 = vector<double>(Np,0.);
@@ -210,19 +214,74 @@ void Element::Set_RHS() {
         }
     }
     for (int i = 0; i < Np; i++) {
+        RHS_A_oldold[i] = RHS_A_old[i];
+        RHS_U_oldold[i] = RHS_U_old[i];
+        RHS_A_old[i] = RHS_A[i];
+        RHS_U_old[i] = RHS_U[i];
+    }
+    for (int i = 0; i < Np; i++) {
         RHS_A[i] = -rx * dFAdx[i] + rx * dFA2 * Lp2(i) - rx * dFA1 * Lp1(i);
         RHS_U[i] = -rx * dFUdx[i] + rx * dFU2 * Lp2(i) - rx * dFU1 * Lp1(i) + S_U[i];
     }
+    
+
 }
 
-void Element::Update(const double &a, const double &b, const double &dt) {
+void Element::Update(double a, double b, double c, const double &dt) {
     for (int i = 0; i < Np; i++) {
-        k_A[i] = a * k_A[i] + dt * RHS_A[i];
-        k_U[i] = a * k_U[i] + dt * RHS_U[i];
-        A[i] = A[i] + b * k_A[i];
-        Q[i] = Q[i] + b * k_U[i];
+        A[i] = A[i] + dt*(a*RHS_A[i]+b*RHS_A_old+c*RHS_A_oldold);
+        Q[i] = Q[i] + dt*(a*RHS_U[i]+b*RHS_U_old+c*RHS_U_oldold);
     }
 }
+
+
+// double Tube :: Hp (int i, double Q, double A)
+// {
+//   return (F(Q,A) - A*dPdx1(i,A)/Fr2)/(-Q/A + c(i,A));
+// }
+
+// double Tube :: Hn (int i, double Q, double A)
+// {
+//     return (F(Q,A) - A*dPdx1(i,A)/Fr2)/(-Q/A - c(i,A));
+// }
+
+// void Tube :: poschar (double theta, double &qR, double &aR, double &cR, double &HpR)
+// {
+//   double ctm1  = c  (N, Aold[N]);
+//   double Hptm1 = Hp (N, Qold[N], Aold[N]);
+//   double uR    = Qold[N] / Aold[N];
+//   double ch    = (uR + ctm1) * theta;
+
+//   if (uR + ctm1 < 0)
+//   {
+//     printf("uR + ctm1 < 0, CFL condition violated\n");
+//       exit(1);
+//   }
+
+//   qR  = Qold[N] - (Qold[N] - Qold[N-1])*ch;
+//   aR  = Aold[N] - (Aold[N] - Aold[N-1])*ch;
+//   cR  = ctm1    - (ctm1  - c (N-1,Aold[N-1]))*ch;
+//   HpR = Hptm1   - (Hptm1 - Hp(N-1,Qold[N-1],Aold[N-1]))*ch;
+// }
+
+// void Tube :: negchar (double theta, double &qS, double &aS, double &cS, double &HnS)
+// {
+//     double ctm1  = c(0, Aold[0]);
+//     double Hntm1 = Hn(0, Qold[0], Aold[0]);
+//     double uS    = Qold[0]/Aold[0];
+//     double ch    = (uS - ctm1) * theta;
+    
+//     if ( ctm1 - uS < 0)
+//     {
+//         printf("ctm1 - uS < 0, CFL condition violated\n");
+//         exit(1);
+//     }
+    
+//     qS  = Qold[0] + (Qold[0] - Qold[1])*ch;
+//     aS  = Aold[0] + (Aold[0] - Aold[1])*ch;
+//     cS  = ctm1    + (ctm1  - c (1,Aold[1]))*ch;
+//     HnS = Hntm1   + (Hntm1 - Hn(1,Qold[1],Aold[1]))*ch;
+// }
 
 
 
