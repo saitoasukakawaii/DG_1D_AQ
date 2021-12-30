@@ -16,6 +16,7 @@
 module root_imp
 use f90_tools     ! Contains several tools used for when computing FFT.
 implicit none
+INCLUDE 'fftw3.f'
 
 private
 public impedance  ! The subroutine called from the c-program arteries.cxx
@@ -324,12 +325,13 @@ implicit none
 ! integer                    :: nb_terms
 ! real(lng)                  :: beta, alpha
   real(lng)                  :: df, Freq(tmstps+1), Omega(tmstps+1)!, trm_rst
-  complex(lng)               :: Z_hat(tmstps), Y_hat(tmstps)
+  complex(lng)               :: Z_hat(tmstps), Y_hat(tmstps), out(tmstps)
 
-  integer, parameter                  :: nbuf = 3, f1 = 10
-  character (len=40)                  :: fn
+  integer, parameter                  :: nbuf = 3, f1 = 10, f2 = 11
+  character (len=30)                  :: fn
   character (len=40), dimension(nbuf) :: buffer  ! Temporary strings
   integer k
+  integer*8 plan    ! fftw3 plan
   
   ! Physical parameters
   df     = 1/Period                            ! Frequency interval. 
@@ -354,24 +356,45 @@ implicit none
   ! In particular, amplitude must be independent of resolution.
 ! z_xt   = real(IFFT(bitreverse(FFTshift(Z_om)/Period)),lng)
   Z_hat = Z_om
-  Y_hat = 1/Z_om
-  y_xt   = real(IFFT(bitreverse(FFTshift(Y_hat)/Period)),lng)
+  ! Y_hat = 1/Z_om
+  Y_hat = 1/Z_om/Period
+    ! y_xt   = real(IFFT(bitreverse(FFTshift(Y_hat)/Period)),lng) ! maybe wrong for sign
 
-  write (buffer(1),'(I4)') floor(1000*r_root)
-  write (buffer(2),'(I4)') floor(1000*r_min)
-  write (buffer(3),'(I6)') tmstps
-  do k = 1, nbuf
-    buffer(k) = adjustl(buffer(k))
-  end do
-  fn = 'Zhat' // trim(buffer(1)) // '_' // trim(buffer(2)) // '_' // trim(buffer(3))
+    write (buffer(1),'(I4)') floor(1000*r_root)
+    write (buffer(2),'(I4)') floor(1000*r_min)
+    write (buffer(3),'(I6)') tmstps
+    do k = 1, nbuf
+      buffer(k) = adjustl(buffer(k))
+    end do
+    fn = 'Zhat' // trim(buffer(1)) // '_' // trim(buffer(2)) // '_' // trim(buffer(3))
 
-  open (f1, file=fn, action='write') 
-  do k=1,tmstps
-    write (f1,'(3F26.16)') Omega(k)/Lr**3*q, Z_hat(k)*rho*g*Lr/q
-  end do 
-  close(f1)
-  
-  return
+    open (f1, file=fn, action='write')
+    do k=1,tmstps
+      write (f1,'(3F26.16)') Omega(k)/Lr**3*q, Z_hat(k)*rho*g*Lr/q
+    end do
+    close(f1)
+
+    call dfftw_plan_dft_1d(plan,tmstps,Y_hat,out,FFTW_BACKWARD,FFTW_ESTIMATE)
+    call dfftw_execute_dft(plan, Y_hat, out)
+    call dfftw_destroy_plan(plan)
+
+    y_xt = real(out, lng)
+
+    write (buffer(1),'(I4)') floor(1000*r_root)
+    write (buffer(2),'(I4)') floor(1000*r_min)
+    write (buffer(3),'(I6)') tmstps
+    do k = 1, nbuf
+      buffer(k) = adjustl(buffer(k))
+    end do
+    fn = 'Y_' // trim(buffer(1)) // '_' // trim(buffer(2)) // '_' // trim(buffer(3))
+
+    open (f2, file=fn, action='write')
+    do k=1,tmstps
+      write (f2,'(3F26.16)') y_xt(k)
+    end do
+    close(f2)
+
+    return
   
 end subroutine impedance
 

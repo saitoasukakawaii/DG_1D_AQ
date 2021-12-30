@@ -3,7 +3,7 @@ project(DG_1D_AQ)
 
 
 enable_language(Fortran)
-set(INC_DIR ./ ~/eigen-3.4.0 ~/boost_1_77_0)
+set(INC_DIR ./ ~/eigen-3.4.0 ~/boost_1_77_0 /usr/local/include)
 
 set(CMAKE_CXX_FLAGS "-Wall -std=c++17")
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -O0 -g -ggdb")
@@ -17,7 +17,7 @@ list(APPEND EXTRA_LIBS Polynomial)
 add_subdirectory(SmallTree)
 list(APPEND EXTRA_LIBS SmallTree)
 
-list(APPEND EXTRA_LIBS lapack blas)
+list(APPEND EXTRA_LIBS lapack blas fftw3)
 
 add_executable(DG_1D_AQ main.cpp Element.cpp artery.cpp tools.h)
 

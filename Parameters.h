@@ -85,4 +85,6 @@ namespace RK4{
                               2802321613138.0/2924317926251.0};
 }
 
+double const AB[3] = { 23./12., -16./12., 5/12 };
+
 #endif //DG_1D_PARAMETERS_H
