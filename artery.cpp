@@ -235,8 +235,8 @@ void Artery::Bifur_Flux()
         J(0,0) = 1/x[3];
         J(0,1) = 0;
         J(0,2) = 0;
-        J(0,3) = -x[0]/pow(x[3],2.)-cl/x[3];    // olufsen
-//        J(0,3) = -x[0]/pow(x[3],2.)+cl/x[3];
+//        J(0,3) = -x[0]/pow(x[3],2.)-cl/x[3];    // olufsen
+        J(0,3) = -x[0]/pow(x[3],2.)+cl/x[3];
         J(0,4) = 0;
         J(0,5) = 0;
 
@@ -244,8 +244,8 @@ void Artery::Bifur_Flux()
         J(1,1) = 1/x[4];
         J(1,2) = 0;
         J(1,3) = 0;
-        J(1,4) = -x[1]/pow(x[4],2.)+cr1/x[4];   // olufsen
-//        J(1,4) = -x[1]/pow(x[4],2.)-cr1/x[4];
+//        J(1,4) = -x[1]/pow(x[4],2.)+cr1/x[4];   // olufsen
+        J(1,4) = -x[1]/pow(x[4],2.)-cr1/x[4];
         J(1,5) = 0;
 
         J(2,0) = 0;
@@ -253,8 +253,8 @@ void Artery::Bifur_Flux()
         J(2,2) = 1/x[5];
         J(2,3) = 0;
         J(2,4) = 0;
-        J(2,5) = -x[2]/pow(x[5],2.)+cr2/x[5];   // olfusen
-//        J(2,5) = -x[2]/pow(x[5],2.)-cr2/x[5];
+//        J(2,5) = -x[2]/pow(x[5],2.)+cr2/x[5];   // olufsen
+        J(2,5) = -x[2]/pow(x[5],2.)-cr2/x[5];
 
         J(3,0) =  1;
         J(3,1) = -1;
@@ -346,8 +346,8 @@ void Artery::Inlet_Flux(const double &T) {
         c  = start_el.Get_c(0, x);
 
         f  = Q/x-4*c-start_el.W1L;
-        df = c/x-Q/pow(x,2.);   // olufsen
-//        df = -c/x-Q/pow(x,2.);
+//        df = c/x-Q/pow(x,2.);   // olufsen
+        df = -c/x-Q/pow(x,2.);
         if( fabs(df) < SMALL ){
             std::stringstream tmp;
             tmp << "Error in Qinflow: zero derivative in the Newton's iteration. Iteration step is: "<< iter << ".\n";
@@ -423,93 +423,48 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt)
         throw std::runtime_error(tmp.str());
     }
     // The value of the function and the derivative is initialized to 0.
-//    double f,df,x,dx,c;
-//    x = end_el.A[Np-1];
-    double f[2], df[2][2], x[2], dx[2], c;
-    x[0] = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, end_el.A[Np-1])+pterms;
-    x[1] = end_el.A[Np-1];
+    double f,df,x,dx,c;
+    x = end_el.A[Np-1];
     // y is non-dimension, need dimension
     while ((proceed)&&(iter++ < MAX_ITER))
     {
-//        c = end_el.Get_c(Np-1, x);
-//        double Q = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms;
-//        f = Q/x+4*c-end_el.W2R;
+        c = end_el.Get_c(Np-1, x);
+        double Q = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms;
+        f = Q/x+4*c-end_el.W2R;
 //        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)-c/x;  // olufsen
+        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)+c/x;
 //        f = Q+4*c*x-end_el.W2R*x;
 //        df = dt*y[0]*Unit_Y*c*c*rho/x+3*c-end_el.W2R*x;  // olufsen
-//        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)+c/x;
-//        if( fabs(df) < SMALL ){
-//            throw std::runtime_error("Error in SmallTree outflow: zero derivative in the Newton's iteration.\n");
-//        }
-//        dx = f/df;
-//        x = x-dx;
-//        if (x <= 0.0)
-//        {
-//            std::cout << "WARNING (arteries.C): Bound_right: A was negative A = "
-//                      << x << " time = " << n_step*dt <<  " L = " << L << std::endl;
-//            x = end_el.A[Np-1]; // Bound xr away from zero.
-//        }
-//        if(dx*dx < TOL)      proceed = 0;
-//        if(f*f < TOL)      proceed = 0;
-        c = end_el.Get_c(Np-1, x[1]);
-        f[0] = x[0]/x[1]+4*c-end_el.W2R;
-        f[1] = x[0]-dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x[1])-pterms;
-        double a = dt*y[0]*Unit_Y*rho;
-        double k = (- a*c*c + x[1]*c + x[0]);
-        if( fabs(k) < SMALL ){
-            throw std::runtime_error("Error in SmallTree outflow: k is too small.\n");
+        if( fabs(df) < SMALL ){
+            throw std::runtime_error("Error in SmallTree outflow: zero derivative in the Newton's iteration.\n");
         }
-        df[0][0] = -(x[1]*c*c*a);     // -(A*C^2*a)/(- a*C^2 + A*C + Q)
-        df[0][1] =  (x[0]+x[1]*c);    //  (Q + A*C)/(- a*C^2 + A*C + Q)
-        df[1][0] = -x[1]*x[1];          //       -A^2/(- a*C^2 + A*C + Q)
-        df[1][1] =  x[1];               //          A/(- a*C^2 + A*C + Q)
-
-        dx[0] = (df[0][0]*f[0]+df[0][1]*f[1])/k;
-        dx[1] = (df[1][0]*f[0]+df[1][1]*f[1])/k;
-
-        x[0] -= dx[0]; x[1] -= dx[1];
-//        dx = f/df;
-//        x = x-dx;
-        if (x[1] <= 0.0)
+        dx = f/df;
+        x = x-dx;
+        if (x <= 0.0)
         {
             std::cout << "WARNING (arteries.C): Bound_right: A was negative A = "
-                      << x[1] << " time = " << n_step*dt <<  " L = " << L << std::endl;
-            x[1] = 1.1*end_el.A[Np-1]; // Bound xr away from zero.
+                      << x << " time = " << n_step*dt <<  " L = " << L << std::endl;
+            x = end_el.A[Np-1]; // Bound xr away from zero.
         }
-        if(dx[0]*dx[0]+dx[1]*dx[1] < TOL)      proceed = 0;
+        if(dx*dx< TOL)      proceed = 0;
 //        if(f*f < TOL)      proceed = 0;
     }
     // Solutions are applied, and right boundary and the intermediate array QL
     // are updated.
-
     if(iter >= MAX_ITER){
         std::stringstream tmp;
         tmp << "Error in terminal Riemann: iteration failed to converge. " << std::endl;
-        tmp << "A is: " << x[1]
-                  << "; f is: " << f[0] << ", " << f[1]
-//                  << "; df is: " << df
+        tmp << "A is: " << x
+                  << "; f is: " << f
+                  << "; df is: " << df
                   << "; iter is: " << iter
                   << "; time is: " << dt*n_step
                   << std::endl;
         throw std::runtime_error(tmp.str());
     }
-    double Qstar = x[0];
-    end_el.W2L = (x[0]/x[1]-4*end_el.Get_c(Np-1,x[1]));
+    double Qstar = (dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms);
+    end_el.W2L = (Qstar/x-4*end_el.Get_c(Np-1,x));
     RiemannEnd(end_el,Qstar,ID);
-//    if(iter >= MAX_ITER){
-//        std::stringstream tmp;
-//        tmp << "Error in terminal Riemann: iteration failed to converge. " << std::endl;
-//        tmp << "A is: " << x
-//                  << "; f is: " << f
-//                  << "; df is: " << df
-//                  << "; iter is: " << iter
-//                  << "; time is: " << dt*n_step
-//                  << std::endl;
-//        throw std::runtime_error(tmp.str());
-//    }
-//    double Qstar = (dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms);
-//    end_el.W2L = (Qstar/x-4*end_el.Get_c(Np-1,x));
-//    RiemannEnd(end_el,Qstar,ID);
 }
 
 void Artery::printX(std::ofstream &fd) const {
@@ -763,15 +718,15 @@ void RiemannStart(Element &start_el, const double &Q_star, const int &ID){
 
         J(0,0) = 1/x[2];
         J(0,1) = 0;
-        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
-//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
+//        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
+        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
         J(0,3) = 0;
 
         J(1,0) = 0;
         J(1,1) = 1/x[3];
         J(1,2) = 0;
-        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olufsen
-//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
+//        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olufsen
+        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
 
         J(2,0) =  1;
         J(2,1) = -1;
@@ -835,15 +790,15 @@ void RiemannEnd(Element &end_el, const double &Q_star, const int &ID){
 
         J(0,0) = 1/x[2];
         J(0,1) = 0;
-        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
-//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
+//        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
+        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
         J(0,3) = 0;
 
         J(1,0) = 0;
         J(1,1) = 1/x[3];
         J(1,2) = 0;
-        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olfusen
-//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
+//        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olfusen
+        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
 
         J(2,0) =  1;
         J(2,1) = -1;
@@ -915,15 +870,15 @@ void Riemann(Element &el1, Element &el2, const int &j, const int &N_e)
 
         J(0,0) = 1/x[2];
         J(0,1) = 0;
-        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];  // olufsen
-//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
+//        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];  // olufsen
+        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
         J(0,3) = 0;
 
         J(1,0) = 0;
         J(1,1) = 1/x[3];
         J(1,2) = 0;
-        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];  // olufsen
-//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
+//        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];  // olufsen
+        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
 
         J(2,0) =  1;
         J(2,1) = -1;

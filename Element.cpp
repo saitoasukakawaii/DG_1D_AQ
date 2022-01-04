@@ -105,9 +105,9 @@ void Element::Set_c0() {
 
 void Element::Set_c() {
     for (int i = 0; i < Np; ++i) {
-        c[i] = sqrt( 0.5*EH_r0[i]*sqrt(A0[i]/A[i]) / rho );         // olufsen
+//        c[i] = sqrt( 0.5*EH_r0[i]*sqrt(A0[i]/A[i]) / rho );         // olufsen
         //
-//        c[i] = sqrt(0.5 * EH_r0[i] * sqrt(A[i] / A0[i]) / rho);
+        c[i] = sqrt(0.5 * EH_r0[i] * sqrt(A[i] / A0[i]) / rho);
     }
 }
 
@@ -115,35 +115,35 @@ void Element::Set_c() {
 
 void Element::Set_P() {
     for (int i = 0; i < Np; i++) {
-        P[i] = EH_r0[i]*(1-sqrt(A0[i]/A[i]));             // olufsen
-//        P[i] = EH_r0[i] * (sqrt(A[i] / A0[i]) - 1);
+//        P[i] = EH_r0[i]*(1-sqrt(A0[i]/A[i]));             // olufsen
+        P[i] = EH_r0[i] * (sqrt(A[i] / A0[i]) - 1);
     }
 }
 
 void Element::Set_phi() {
     for (int i = 0; i < Np; i++) {
-        phi[i] = EH_r0[i]*( sqrt(A0[i]*A[i])-A[0] ) / rho;             // olufsen
-//       phi[i] = EH_r0[i] * ( pow(A[i],1.5)-pow(A0[i],1.5) ) /rho/3/sqrt(A0[i]);
+//        phi[i] = EH_r0[i]*( sqrt(A0[i]*A[i])-A[0] ) / rho;             // olufsen
+       phi[i] = EH_r0[i] * ( pow(A[i],1.5)-pow(A0[i],1.5) ) /rho/3/sqrt(A0[i]);
     }
 }
 
 double Element::Get_c(const int &i, const double &A_) {
     assert(i >= 0 && i < Np);
-    return sqrt( 0.5*EH_r0[i]*sqrt(A0[i]/A_)/rho );       // olufsen
-//    return sqrt(0.5 * EH_r0[i] * sqrt(A_ / A0[i]) / rho);
+//    return sqrt( 0.5*EH_r0[i]*sqrt(A0[i]/A_)/rho );       // olufsen
+    return sqrt(0.5 * EH_r0[i] * sqrt(A_ / A0[i]) / rho);
 }
 
 
 double Element::Get_P(const int &i, const double &A_) {
     assert(i >= 0 && i < Np);
-    return EH_r0[i]*(1-sqrt(A0[i]/A_));               // olufsen
-//    return EH_r0[i] * (sqrt(A_ / A0[i]) - 1);
+//    return EH_r0[i]*(1-sqrt(A0[i]/A_));               // olufsen
+    return EH_r0[i] * (sqrt(A_ / A0[i]) - 1);
 }
 
 double Element::Get_phi(const int &i, const double &A_) {
     assert(i >= 0 && i < Np);
-    return EH_r0[i]*( sqrt(A0[i]*A_)-A[0] ) / rho;             // olufsen
-//    return EH_r0[i] * ( pow(A[i],1.5)-pow(A0[i],1.5) ) /rho/3/sqrt(A0[i]);
+//    return EH_r0[i]*( sqrt(A0[i]*A_)-A[0] ) / rho;             // olufsen
+    return EH_r0[i] * ( pow(A[i],1.5)-pow(A0[i],1.5) ) /rho/3/sqrt(A0[i]);
 }
 
 // need change, length is wrong
@@ -177,12 +177,13 @@ void Element::Set_S() {
     double F_c = -22 * M_PI * mu;
 
     for (int i = 0; i < Np; i++) {
-//        S_U[i] = ( F_c * Q[i] / A[i] + dfdr0[i]*dr0dx[i]*( A[i]-2/3*pow(A[i],1.5)/sqrt(M_PI)/r0[i] )
-//                + dr0dx[i]*EH_r0[i]*2/3*pow(A[i],1.5)/sqrt(M_PI)/pow(r0[i],2.) ) / rho;
-        // olufsen
         S_U[i] = ( F_c * Q[i] / A[i]
-                + dfdr0[i]*dr0dx[i]*( sqrt(A[i]*A[0])*2-A[i]-A0[i] )
-                + EH_r0[i]*dr0dx[i]*2*( sqrt(A[i]*M_PI)-M_PI*r0[i] ) ) / rho;
+                + dfdr0[i]*dr0dx[i]*( A[i]-2/3*pow(A[i],1.5)/sqrt(A0[i])-A0[i]/3 )
+                + dr0dx[i]*EH_r0[i]*2/3*( pow(A[i],1.5)*sqrt(M_PI)/A0[i]-M_PI*r0[i] ) ) / rho;
+//        // olufsen
+//        S_U[i] = ( F_c * Q[i] / A[i]
+//                + dfdr0[i]*dr0dx[i]*( sqrt(A[i]*A[0])*2-A[i]-A0[i] )
+//                + EH_r0[i]*dr0dx[i]*2*( sqrt(A[i]*M_PI)-M_PI*r0[i] ) ) / rho;
     }
 }
 
