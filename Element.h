@@ -87,14 +87,17 @@ public:
         W2L = Q[Np-1]/A[Np-1]-4*c[Np-1];
         W2R = Q[Np-1]/A[Np-1]+4*c[Np-1];
     }
-    void Update(const double &a, const double &b, const double &dt);
+    void Update(const double &a, const double &b, const double &c, const double &dt);
     inline void ReSetK(){
         for (int i = 0; i < Np; ++i) {
             k_A[i] = 0.;
             k_U[i] = 0.;
         }
-
     }
+
+
+//    void poschar (const double &dt, double &qR, double &aR, double &cR, double &HpR);
+//    void negchar (const double &dt, double &qS, double &aS, double &cS, double &HnS);
 };
 
 

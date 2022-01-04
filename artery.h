@@ -90,10 +90,10 @@ public:
             el[i].Set_RHS();
         }
     }
-    inline void Update(const double &a, const double &b, const double &dt) {
+    inline void Update(const double &a, const double &b, const double &c, const double &dt) {
         for(int i=0;i<N_e;++i)
         {
-            el[i].Update(a,b,dt);
+            el[i].Update(a,b,c,dt);
         }
     }
 
@@ -131,7 +131,7 @@ public:
 };
 void BioFlux(const int &nbrves, Artery *Arteries[],
              const std::set<int>& ID_Bif, const std::set<int>& ID_Out,
-             const int &n_step, const int &qLnb, const double &dt, const double &rk4c);
+             const int &n_step, const int &qLnb, const double &dt);
 // solving Riemann problem for interface of two elements
 void Riemann(Element &el1, Element &el2, const int &j, const int &N_e);
 // solving Riemann problem for the element at the start of the artery
@@ -143,7 +143,7 @@ void solver(const int &nbrves, Artery *Arteries[], int &n_step,
             const std::set<int>& ID_Out, const std::set<int>& ID_Bif);
 void solverRHS(const int &nbrves, Artery *Arteries[],
                const std::set<int>& ID_Bif, const std::set<int>& ID_Out,
-               const int &n_step, const int &qLnb, const double &dt, const double &rk4c);
+               const int &n_step, const int &qLnb, const double &dt);
 double Get_CFL(const int &nbrves, Artery *Arteries[]);
 
 #endif //DG_1D_ARTERY_H

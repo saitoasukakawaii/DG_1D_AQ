@@ -122,8 +122,8 @@ void Element::Set_P() {
 
 void Element::Set_phi() {
     for (int i = 0; i < Np; i++) {
-        phi[i] = EH_r0[i]*r0[i]*sqrt(M_PI*A[i]) / rho;             // olufsen
-//       phi[i] = EH_r0[i]*pow(A[i],1.5)/rho/3/sqrt(A0[i]);
+        phi[i] = EH_r0[i]*( sqrt(A0[i]*A[i])-A[0] ) / rho;             // olufsen
+//       phi[i] = EH_r0[i] * ( pow(A[i],1.5)-pow(A0[i],1.5) ) /rho/3/sqrt(A0[i]);
     }
 }
 
@@ -142,8 +142,8 @@ double Element::Get_P(const int &i, const double &A_) {
 
 double Element::Get_phi(const int &i, const double &A_) {
     assert(i >= 0 && i < Np);
-    return phi[i] = EH_r0[i]*sqrt(A0[i]*A_)/rho;             // olufsen
-//    return phi[i] = EH_r0[i]*pow(A_,1.5)/rho/3/sqrt(A0[i]);
+    return EH_r0[i]*( sqrt(A0[i]*A_)-A[0] ) / rho;             // olufsen
+//    return EH_r0[i] * ( pow(A[i],1.5)-pow(A0[i],1.5) ) /rho/3/sqrt(A0[i]);
 }
 
 // need change, length is wrong
@@ -180,8 +180,9 @@ void Element::Set_S() {
 //        S_U[i] = ( F_c * Q[i] / A[i] + dfdr0[i]*dr0dx[i]*( A[i]-2/3*pow(A[i],1.5)/sqrt(M_PI)/r0[i] )
 //                + dr0dx[i]*EH_r0[i]*2/3*pow(A[i],1.5)/sqrt(M_PI)/pow(r0[i],2.) ) / rho;
         // olufsen
-        S_U[i] = ( F_c * Q[i] / A[i] + dfdr0[i]*dr0dx[i]*( sqrt(A[i]*M_PI)*r0[i]*2-A[i] )
-                   + dr0dx[i]*EH_r0[i]*2*sqrt(A[i]*M_PI) ) / rho;
+        S_U[i] = ( F_c * Q[i] / A[i]
+                + dfdr0[i]*dr0dx[i]*( sqrt(A[i]*A[0])*2-A[i]-A0[i] )
+                + EH_r0[i]*dr0dx[i]*2*( sqrt(A[i]*M_PI)-M_PI*r0[i] ) ) / rho;
     }
 }
 
@@ -227,10 +228,10 @@ void Element::Set_RHS() {
 
 }
 
-void Element::Update(double a, double b, double c, const double &dt) {
+void Element::Update(const double &a, const double &b, const double &c, const double &dt) {
     for (int i = 0; i < Np; i++) {
-        A[i] = A[i] + dt*(a*RHS_A[i]+b*RHS_A_old+c*RHS_A_oldold);
-        Q[i] = Q[i] + dt*(a*RHS_U[i]+b*RHS_U_old+c*RHS_U_oldold);
+        A[i] = A[i] + dt*(a*RHS_A[i]+b*RHS_A_old[i]+c*RHS_A_oldold[i]);
+        Q[i] = Q[i] + dt*(a*RHS_U[i]+b*RHS_U_old[i]+c*RHS_U_oldold[i]);
     }
 }
 
@@ -245,38 +246,36 @@ void Element::Update(double a, double b, double c, const double &dt) {
 //     return (F(Q,A) - A*dPdx1(i,A)/Fr2)/(-Q/A - c(i,A));
 // }
 
-// void Tube :: poschar (double theta, double &qR, double &aR, double &cR, double &HpR)
+// void Element::poschar (const double &dt, double &qR, double &aR, double &cR, double &HpR)
 // {
-//   double ctm1  = c  (N, Aold[N]);
+//   double ctm1  = c[Np-1];
 //   double Hptm1 = Hp (N, Qold[N], Aold[N]);
 //   double uR    = Qold[N] / Aold[N];
 //   double ch    = (uR + ctm1) * theta;
-
+//
 //   if (uR + ctm1 < 0)
 //   {
-//     printf("uR + ctm1 < 0, CFL condition violated\n");
-//       exit(1);
+//     throw("uR + ctm1 < 0, flow is not subsonic!\n");
 //   }
-
+//
 //   qR  = Qold[N] - (Qold[N] - Qold[N-1])*ch;
 //   aR  = Aold[N] - (Aold[N] - Aold[N-1])*ch;
 //   cR  = ctm1    - (ctm1  - c (N-1,Aold[N-1]))*ch;
 //   HpR = Hptm1   - (Hptm1 - Hp(N-1,Qold[N-1],Aold[N-1]))*ch;
 // }
-
-// void Tube :: negchar (double theta, double &qS, double &aS, double &cS, double &HnS)
+//
+//void Element::negchar (const double theta, double &qS, double &aS, double &cS, double &HnS)
 // {
-//     double ctm1  = c(0, Aold[0]);
+//     double ctm1  = c[0];
 //     double Hntm1 = Hn(0, Qold[0], Aold[0]);
 //     double uS    = Qold[0]/Aold[0];
 //     double ch    = (uS - ctm1) * theta;
-    
+//
 //     if ( ctm1 - uS < 0)
 //     {
-//         printf("ctm1 - uS < 0, CFL condition violated\n");
-//         exit(1);
+//         throw("ctm1 - uS < 0, CFL condition violated\n");
 //     }
-    
+//
 //     qS  = Qold[0] + (Qold[0] - Qold[1])*ch;
 //     aS  = Aold[0] + (Aold[0] - Aold[1])*ch;
 //     cS  = ctm1    + (ctm1  - c (1,Aold[1]))*ch;

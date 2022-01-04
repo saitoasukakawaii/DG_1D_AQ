@@ -164,7 +164,10 @@ int main() {
 
 
     // Runge-Kutta coefficient.
-    using namespace RK4;
+//    using namespace RK4;
+    cout << AB[0][0] << "\t"
+            << AB[0][1] << "\t"
+            << AB[0][2] << endl;
     // start time
     double t = tstart;
     // used for terminal boundary and inlet boundary, the n_step in a Period
@@ -193,15 +196,30 @@ int main() {
                 }
             }
         }
-        for(int j=0;j<RK4::N_t;++j) {
+
             try {
 //                solverRHS(nbrves, Arteries, ID_Bif, ID_Out, n_step, qLnb, dt, 0);
-                solverRHS(nbrves, Arteries, ID_Bif, ID_Out, n_step, qLnb, dt, rk4c[j]);
+                solverRHS(nbrves, Arteries, ID_Bif, ID_Out, n_step, qLnb, dt);
                 for (int i = 0; i < nbrves; ++i) {
                     // calculate the right hand side of ODE
                     // update
-                    Arteries[i]->Update(rk4a[j], rk4b[j], dt);
-//                    Arteries[i]->Update(0, 1, dt);
+                    switch (n_step) {
+                        case 0:
+                            Arteries[i]->Update(AB[0][0], AB[0][1],AB[0][2], dt);
+                            break;
+                        case 1:
+                            Arteries[i]->Update(AB[0][0], AB[0][1],AB[0][2], dt);
+                            break;
+                        case 2:
+                            Arteries[i]->Update(AB[1][0], AB[1][1],AB[1][2], dt);
+                            break;
+                        case 3:
+                            Arteries[i]->Update(AB[1][0], AB[1][1],AB[1][2], dt);
+                            break;
+                        default:
+                            Arteries[i]->Update(AB[2][0], AB[2][1],AB[2][2], dt);
+                            break;
+                    }
                 }
                 for (auto i: ID_Out){
                     Arteries[i]->Update_pL(qLnb+1);
@@ -212,7 +230,7 @@ int main() {
                           << std::endl
                           << std::endl
                           << "Some error happen at Run time step: " << n_step
-                          << ", time is: " << t << ".\n CFL: " << courant << ", Runge-Kutta step is: " << j << ".\n";
+                          << ", time is: " << t << ".\n CFL: " << courant << ".\n";
                 std::cerr << e.what() << "\n"
                           << "----------------------------------------------------"
                           << std::endl;
@@ -223,14 +241,14 @@ int main() {
                           << "----------------------------------------------------"
                           << std::endl;
                 std::cerr << "Unknown exception at Run time step: " << n_step
-                          << ", time is: " << t << ".\n CFL: " << courant << ", Runge-Kutta step is: " << j << ".\n"
+                          << ", time is: " << t << ".\n CFL: " << courant << ".\n"
                           << "Aborting!" << std::endl
                           << "----------------------------------------------------"
                           << std::endl;
 
                 exit(0);
             }
-        }
+
 //        for (int i = 0; i < nbrves; ++i) {
 //            //
 //            Arteries[i]->clean_k();

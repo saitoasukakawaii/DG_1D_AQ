@@ -707,12 +707,12 @@ void Artery::Read_inverse_Z(std::string &filename){
 //B ioFlux(nbrves, Arteries, ID_Bif, ID_Out, qLnb,  dt,  rk4c);
 void BioFlux(const int &nbrves, Artery *Arteries[],
              const std::set<int>& ID_Bif, const std::set<int>& ID_Out,
-             const int &n_step, const int &qLnb, const double &dt, const double &rk4c)
+             const int &n_step, const int &qLnb, const double &dt)
 {
     // Q0[i], i should get from mod
     // Q0 change with time can modified by add function not read from file
     // the first element of inlet, and dont need check Q and P,
-    Arteries[0]->Inlet_Flux((qLnb+rk4c)*dt);
+    Arteries[0]->Inlet_Flux((qLnb)*dt);
     for (auto i: ID_Bif) {
         Arteries[i]->Bifur_Flux();
     }
@@ -967,7 +967,7 @@ void solver(const int &nbrves, Artery *Arteries[], int &n_step,
 {
 
     // Runge-Kutta coefficient.
-    using namespace RK4;
+//    using namespace RK4;
     // start time
     double t = tstart;
     // used for terminal boundary and inlet boundary, the n_step in a Period
@@ -1012,13 +1012,13 @@ void solver(const int &nbrves, Artery *Arteries[], int &n_step,
         for(int j=0;j<RK4::N_t;++j) {
             try {
 //                solverRHS(nbrves, Arteries, ID_Bif, ID_Out, n_step, qLnb, dt, 0);
-                solverRHS(nbrves, Arteries, ID_Bif, ID_Out, n_step, qLnb, dt, rk4c[j]);
-                for (int i = 0; i < nbrves; ++i) {
-                    // calculate the right hand side of ODE
-                    // update
-                    Arteries[i]->Update(rk4a[j], rk4b[j], dt);
-//                    Arteries[i]->Update(0, 1, dt);
-                }
+                solverRHS(nbrves, Arteries, ID_Bif, ID_Out, n_step, qLnb, dt);
+//                for (int i = 0; i < nbrves; ++i) {
+//                    // calculate the right hand side of ODE
+//                    // update
+//                    Arteries[i]->Update(rk4a[j], rk4b[j], dt);
+////                    Arteries[i]->Update(0, 1, dt);
+//                }
                 for (auto i: ID_Out){
                     Arteries[i]->Update_pL(qLnb+1);
                 }
@@ -1060,7 +1060,7 @@ void solver(const int &nbrves, Artery *Arteries[], int &n_step,
 ////
 void solverRHS(const int &nbrves, Artery *Arteries[],
                const std::set<int>& ID_Bif, const std::set<int>& ID_Out,
-               const int &n_step, const int &qLnb, const double &dt, const double &rk4c)
+               const int &n_step, const int &qLnb, const double &dt)
 {
     // \frac{\partial F}{\partial x}
     // upwind Flux-local Flux
@@ -1070,7 +1070,7 @@ void solverRHS(const int &nbrves, Artery *Arteries[],
         Arteries[i]->Set_F(); // set c, P and then set F
         Arteries[i]->Set_S(); // set source term
     }
-    BioFlux(nbrves, Arteries, ID_Bif, ID_Out, n_step, qLnb, dt, rk4c);
+    BioFlux(nbrves, Arteries, ID_Bif, ID_Out, n_step, qLnb, dt);
     for (int i=0;i<nbrves;++i)
     {
         Arteries[i]->Set_RHS();
