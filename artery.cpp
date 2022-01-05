@@ -381,7 +381,7 @@ void Artery::Inlet_Flux(const double &T) {
 
 // y is non-dimension, P is united
 // qLnb have some issues
-void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt)
+void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt, const double &rk4c)
 {
     int proceed = 1, iter = 0;
     int qLnb_1 = qLnb + 1;
@@ -403,7 +403,6 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt)
     // see mathematical derivation.
     double pterms = 0.0;
 
-
     double Unit_Y = q/rho/g/Lr;
     if (n_step > constants::tmstps)
     {
@@ -422,12 +421,19 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt)
             << "Current element is: " << ID+1 << ".\n";
         throw std::runtime_error(tmp.str());
     }
+    double qR = 0.0;
+    double aR = 0.0;
+    double cR = 0.0;
+    double HpR = 0.0;
+
+    end_el.poschar(dt*(1+rk4c), qR, aR, cR, HpR);
+
+    double uR = qR/aR;
+
+    double cst = (pterms - qR) / (cR -uR) - aR - HpR*dt;
     // The value of the function and the derivative is initialized to 0.
-//    double f,df,x,dx,c;
-//    x = end_el.A[Np-1];
-    double f[2], df[2][2], x[2], dx[2], c;
-    x[0] = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, end_el.A[Np-1])+pterms;
-    x[1] = end_el.A[Np-1];
+    double f,df,x,dx,c;
+    x = end_el.A[Np-1];
     // y is non-dimension, need dimension
     while ((proceed)&&(iter++ < MAX_ITER))
     {
@@ -435,80 +441,98 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt)
 //        double Q = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms;
 //        f = Q/x+4*c-end_el.W2R;
 //        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)-c/x;  // olufsen
+//        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)+c/x;
 //        f = Q+4*c*x-end_el.W2R*x;
 //        df = dt*y[0]*Unit_Y*c*c*rho/x+3*c-end_el.W2R*x;  // olufsen
-//        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)+c/x;
-//        if( fabs(df) < SMALL ){
-//            throw std::runtime_error("Error in SmallTree outflow: zero derivative in the Newton's iteration.\n");
-//        }
-//        dx = f/df;
-//        x = x-dx;
-//        if (x <= 0.0)
-//        {
-//            std::cout << "WARNING (arteries.C): Bound_right: A was negative A = "
-//                      << x << " time = " << n_step*dt <<  " L = " << L << std::endl;
-//            x = end_el.A[Np-1]; // Bound xr away from zero.
-//        }
-//        if(dx*dx < TOL)      proceed = 0;
-//        if(f*f < TOL)      proceed = 0;
-        c = end_el.Get_c(Np-1, x[1]);
-        f[0] = x[0]/x[1]+4*c-end_el.W2R;
-        f[1] = x[0]-dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x[1])-pterms;
-        double a = dt*y[0]*Unit_Y*rho;
-        double k = (- a*c*c + x[1]*c + x[0]);
-        if( fabs(k) < SMALL ){
-            throw std::runtime_error("Error in SmallTree outflow: k is too small.\n");
+
+        // like olufsen:
+        f = x+cst+y[0]*Unit_Y*dt*end_el.Get_P(Np-1, x)/(cR-uR);
+        df = 1+y[0]*Unit_Y*dt*c*c*rho/x/(cR-uR);
+        if( fabs(df) < SMALL ){
+            throw std::runtime_error("Error in SmallTree outflow: zero derivative in the Newton's iteration.\n");
         }
-        df[0][0] = -(x[1]*c*c*a);     // -(A*C^2*a)/(- a*C^2 + A*C + Q)
-        df[0][1] =  (x[0]+x[1]*c);    //  (Q + A*C)/(- a*C^2 + A*C + Q)
-        df[1][0] = -x[1]*x[1];          //       -A^2/(- a*C^2 + A*C + Q)
-        df[1][1] =  x[1];               //          A/(- a*C^2 + A*C + Q)
-
-        dx[0] = (df[0][0]*f[0]+df[0][1]*f[1])/k;
-        dx[1] = (df[1][0]*f[0]+df[1][1]*f[1])/k;
-
-        x[0] -= dx[0]; x[1] -= dx[1];
-//        dx = f/df;
-//        x = x-dx;
-        if (x[1] <= 0.0)
+        dx = f/df;
+        x = x-dx;
+        if (x <= 0.0)
         {
             std::cout << "WARNING (arteries.C): Bound_right: A was negative A = "
-                      << x[1] << " time = " << n_step*dt <<  " L = " << L << std::endl;
-            x[1] = 1.1*end_el.A[Np-1]; // Bound xr away from zero.
+                      << x << " time = " << n_step*dt <<  " L = " << L << std::endl;
+            x = end_el.A[Np-1]; // Bound xr away from zero.
         }
-        if(dx[0]*dx[0]+dx[1]*dx[1] < TOL)      proceed = 0;
+        if(dx*dx < TOL)      proceed = 0;
 //        if(f*f < TOL)      proceed = 0;
     }
     // Solutions are applied, and right boundary and the intermediate array QL
     // are updated.
-
     if(iter >= MAX_ITER){
         std::stringstream tmp;
         tmp << "Error in terminal Riemann: iteration failed to converge. " << std::endl;
-        tmp << "A is: " << x[1]
-                  << "; f is: " << f[0] << ", " << f[1]
-//                  << "; df is: " << df
+        tmp << "A is: " << x
+                  << "; f is: " << f
+                  << "; df is: " << df
                   << "; iter is: " << iter
                   << "; time is: " << dt*n_step
                   << std::endl;
         throw std::runtime_error(tmp.str());
     }
-    double Qstar = x[0];
-    end_el.W2L = (x[0]/x[1]-4*end_el.Get_c(Np-1,x[1]));
+    double Qstar = (dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms);
+    end_el.W2L = (Qstar/x-4*end_el.Get_c(Np-1,x));
     RiemannEnd(end_el,Qstar,ID);
+
+
+//    ****************************
+//    * using two value to solve *
+//    * the terminal condition   *
+//    ****************************
+
+//    double f[2], df[2][2], x[2], dx[2], c;
+//    x[0] = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, end_el.A[Np-1])+pterms;
+//    x[1] = end_el.A[Np-1];
+//    // y is non-dimension, need dimension
+//    while ((proceed)&&(iter++ < MAX_ITER))
+//    {
+//        c = end_el.Get_c(Np-1, x[1]);
+//        f[0] = x[0]/x[1]+4*c-end_el.W2R;
+//        f[1] = x[0]-dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x[1])-pterms;
+//        double a = dt*y[0]*Unit_Y*rho;
+//        double k = (- a*c*c + x[1]*c + x[0]);
+//        if( fabs(k) < SMALL ){
+//            throw std::runtime_error("Error in SmallTree outflow: k is too small.\n");
+//        }
+//        df[0][0] = -(x[1]*c*c*a);     // -(A*C^2*a)/(- a*C^2 + A*C + Q)
+//        df[0][1] =  (x[0]+x[1]*c);    //  (Q + A*C)/(- a*C^2 + A*C + Q)
+//        df[1][0] = -x[1]*x[1];          //       -A^2/(- a*C^2 + A*C + Q)
+//        df[1][1] =  x[1];               //          A/(- a*C^2 + A*C + Q)
+//
+//        dx[0] = (df[0][0]*f[0]+df[0][1]*f[1])/k;
+//        dx[1] = (df[1][0]*f[0]+df[1][1]*f[1])/k;
+//
+//        x[0] -= dx[0]; x[1] -= dx[1];
+//        if (x[1] <= 0.0)
+//        {
+//            std::cout << "WARNING (arteries.C): Bound_right: A was negative A = "
+//                      << x[1] << " time = " << n_step*dt <<  " L = " << L << std::endl;
+//            x[1] = 1.1*end_el.A[Np-1]; // Bound xr away from zero.
+//        }
+//        if(dx[0]*dx[0]+dx[1]*dx[1] < TOL)      proceed = 0;
+////        if(f*f < TOL)      proceed = 0;
+//    }
+//    // Solutions are applied, and right boundary and the intermediate array QL
+//    // are updated.
+//
 //    if(iter >= MAX_ITER){
 //        std::stringstream tmp;
 //        tmp << "Error in terminal Riemann: iteration failed to converge. " << std::endl;
-//        tmp << "A is: " << x
-//                  << "; f is: " << f
-//                  << "; df is: " << df
-//                  << "; iter is: " << iter
-//                  << "; time is: " << dt*n_step
-//                  << std::endl;
+//        tmp << "A is: " << x[1]
+//            << "; f is: " << f[0] << ", " << f[1]
+//            //                  << "; df is: " << df
+//            << "; iter is: " << iter
+//            << "; time is: " << dt*n_step
+//            << std::endl;
 //        throw std::runtime_error(tmp.str());
 //    }
-//    double Qstar = (dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms);
-//    end_el.W2L = (Qstar/x-4*end_el.Get_c(Np-1,x));
+//    double Qstar = x[0];
+//    end_el.W2L = (x[0]/x[1]-4*end_el.Get_c(Np-1,x[1]));
 //    RiemannEnd(end_el,Qstar,ID);
 }
 
@@ -717,7 +741,7 @@ void BioFlux(const int &nbrves, Artery *Arteries[],
         Arteries[i]->Bifur_Flux();
     }
     for (auto i: ID_Out) {
-        Arteries[i]->Terminal_Flux(n_step, qLnb, dt);
+        Arteries[i]->Terminal_Flux(n_step, qLnb, dt, rk4c);
     }
     for (int i=0;i<nbrves;++i)
     {

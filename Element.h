@@ -17,6 +17,7 @@ using constants::g;
 using constants::Fr2;
 using constants::mu;
 using constants::alpha;
+using constants::F_c;
 
 class Element {
 public:
@@ -77,6 +78,11 @@ public:
     void Set_F1();
     void Set_F2();
     void Set_RHS();
+    double Get_dpdx(const int &i);
+    double Hp (const int &i);
+    void poschar (const double &theta,
+                             double &qR, double &aR,
+                             double &cR, double &HpR);
     inline void Set_W1() {
         W1L = Q[0]/A[0]-4*c[0];
         W1R = Q[0]/A[0]+4*c[0];
@@ -91,7 +97,6 @@ public:
             k_A[i] = 0.;
             k_U[i] = 0.;
         }
-
     }
 };
 

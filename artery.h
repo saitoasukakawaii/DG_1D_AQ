@@ -104,7 +104,7 @@ public:
     void Inlet_Flux(const double &T);
     void Inter_Flux();
     void Bifur_Flux();
-    void Terminal_Flux(const int &n_step, const int &qLnb, const double &dt);
+    void Terminal_Flux(const int &n_step, const int &qLnb, const double &dt, const double &rk4c);
 //    void ReSetK(){for (int i=0;i<N_e;++i){el[i].ReSetK();}} // dont need for the rk4a[0]=0
     double Get_Q(const double &T); // inlet flow rate only for ascending aorta
 

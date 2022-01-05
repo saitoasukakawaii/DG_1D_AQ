@@ -55,7 +55,8 @@ const double q      = 10.0*Lr2;                 // The characteristic flow [cm^3
 const double Fr2    = u*u/g/Lr;                 // The squared Froudes number.
 const double Re     = q*rho/mu/Lr;          // Reynolds number.
 // Period = Tper*q/Lr3,           // The dimension-less period.
-const double Fcst   = -M_PI*2*alpha/(alpha-1)/Re;
+//const double Fcst   = -M_PI*2*alpha/(alpha-1)/Re;
+const double F_c   = -2*M_PI*mu*alpha/rho/(alpha-1);
                                                 // coeff of friction. correspond to alpha
 // k      = Period/tmstps,        // Length of a timestep.
 // Deltat = Period/plts,          // Interval between each point plottet.
