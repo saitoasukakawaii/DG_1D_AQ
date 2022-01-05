@@ -139,30 +139,30 @@ void Artery::Inter_Flux() {
         Riemann(el[j - 1], el[j], j, N_e);
         el[j - 1].Set_F2();
         el[j].Set_F1();
-        double dFA = (el[j - 1].FA2 - el[j].FA1);
-        double dFU = (el[j - 1].FU2 - el[j].FU1);
-        if ( dFA*dFA > TOL*100000 ) {
-            std::stringstream tmp;
-            tmp << "Error in BioFlux: Q does not balance at the interelement boundary.\n"
-                << "The number of artery is: " << (ID + 1) << ".\n"
-                << "The order of element is: " << (j - 1) << " and " << j << ".\n"
-                << "The number of element is: " << N_e << ".\n";
-            tmp << "The Flux_star at left element is: " << el[j - 1].FA2 << " and " << el[j - 1].FU2 << ",\n"
-                << "The Flux_star at right element is: " << el[j].FA1 << " and " << el[j].FU1 << ".\n"
-                << "the differ of Q and energy is: " << dFA << " and " << dFU << ".\n";
-            throw std::runtime_error(tmp.str());
-        }
-        if ( dFU*dFU > TOL*100000 ) {
-            std::stringstream tmp;
-            tmp << "Error in BioFlux: energy does not balance at the interelement boundary.\n"
-                << "The number of artery is: " << (ID + 1) << ".\n"
-                << "The order of element is: " << (j - 1) << " and " << j << ".\n"
-                << "The number of element is: " << N_e << ".\n";
-            tmp << "The Flux_star at left element is: " << el[j - 1].FA2 << " and " << el[j - 1].FU2 << ",\n"
-                << "The Flux_star at right element is: " << el[j].FA1 << " and " << el[j].FU1 << ".\n"
-                << "the differ of Q and energy is: " << dFA << " and " << dFU << ".\n";
-            throw std::runtime_error(tmp.str());
-        }
+//        double dFA = (el[j - 1].FA2 - el[j].FA1);
+//        double dFU = (el[j - 1].FU2 - el[j].FU1);
+//        if ( dFA*dFA > TOL*100000 ) {
+//            std::stringstream tmp;
+//            tmp << "Error in BioFlux: Q does not balance at the interelement boundary.\n"
+//                << "The number of artery is: " << (ID + 1) << ".\n"
+//                << "The order of element is: " << (j - 1) << " and " << j << ".\n"
+//                << "The number of element is: " << N_e << ".\n";
+//            tmp << "The Flux_star at left element is: " << el[j - 1].FA2 << " and " << el[j - 1].FU2 << ",\n"
+//                << "The Flux_star at right element is: " << el[j].FA1 << " and " << el[j].FU1 << ".\n"
+//                << "the differ of Q and energy is: " << dFA << " and " << dFU << ".\n";
+//            throw std::runtime_error(tmp.str());
+//        }
+//        if ( dFU*dFU > TOL*100000 ) {
+//            std::stringstream tmp;
+//            tmp << "Error in BioFlux: energy does not balance at the interelement boundary.\n"
+//                << "The number of artery is: " << (ID + 1) << ".\n"
+//                << "The order of element is: " << (j - 1) << " and " << j << ".\n"
+//                << "The number of element is: " << N_e << ".\n";
+//            tmp << "The Flux_star at left element is: " << el[j - 1].FA2 << " and " << el[j - 1].FU2 << ",\n"
+//                << "The Flux_star at right element is: " << el[j].FA1 << " and " << el[j].FU1 << ".\n"
+//                << "the differ of Q and energy is: " << dFA << " and " << dFU << ".\n";
+//            throw std::runtime_error(tmp.str());
+//        }
     }
 }
 // subsonic check before flux calculate then check energy balance

@@ -117,7 +117,7 @@ int main() {
     auto c1 = system_clock::now();        // Only used when timing the program.
     tstart     = 0.0;            // Starting time.
     finaltime  = 10*Period;       // Final end-time during a simulation.
-    tend       = 9*Period;       // Timestep before the first plot-point
+    tend       = 0*Period;       // Timestep before the first plot-point
     // is reached.
     int AST = constants::tmstps;
     impedance_init_driver_(&AST);
