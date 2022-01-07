@@ -101,7 +101,7 @@ public:
     double get_radius(const double &x);
     void local_CFL();
 
-    void Inlet_Flux(const double &T);
+    void Inlet_Flux(const double &T, const double &dt, const double &rk4c);
     void Inter_Flux();
     void Bifur_Flux();
     void Terminal_Flux(const int &n_step, const int &qLnb, const double &dt, const double &rk4c);

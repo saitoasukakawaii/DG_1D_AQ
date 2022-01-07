@@ -237,6 +237,11 @@ double Element :: Hp (const int &i)
     assert(i >= 0 && i < Np);
     return (F_c * Q[i] / A[i] - A[i]*Get_dpdx(i)/rho) / (-Q[i]/A[i] + c[i]);
 }
+double Element :: Hn (const int &i)
+{
+    assert(i >= 0 && i < Np);
+    return (F_c * Q[i] / A[i] - A[i]*Get_dpdx(i)/rho) / (-Q[i]/A[i] - c[i]);
+}
 
 void Element :: poschar (const double &theta,
                          double &qR, double &aR,
@@ -249,13 +254,33 @@ void Element :: poschar (const double &theta,
 
     if (uR + ctm1 < 0)
     {
-        printf("uR + ctm1 < 0, CFL condition violated\n");
+        throw("uR + ctm1 < 0, CFL condition violated\n");
     }
 
     qR  = Q[Np-1] - (Q[Np-1] - Q[Np-2])*ch;
     aR  = A[Np-1] - (A[Np-1] - A[Np-2])*ch;
     cR  = ctm1    - (ctm1  - c [Np-2])*ch;
     HpR = Hptm1   - (Hptm1 - Hp(Np-2))*ch;
+}
+
+void Element :: negchar (const double &theta,
+                         double &qS, double &aS,
+                         double &cS, double &HnS)
+{
+    double ctm1  = c[0];
+    double Hntm1 = Hn(0);
+    double uS    = Q[0]/A[0];
+    double ch    = (uS - ctm1) * theta;
+
+    if ( ctm1 - uS < 0)
+    {
+        throw("ctm1 - uS < 0, CFL condition violated\n");
+    }
+
+    qS  = Q[0] + (Q[0] - Q[1])*ch;
+    aS  = A[0] + (A[0] - A[1])*ch;
+    cS  = ctm1    + (ctm1  - c [1])*ch;
+    HnS = Hntm1   + (Hntm1 - Hn(1))*ch;
 }
 
 

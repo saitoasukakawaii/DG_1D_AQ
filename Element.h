@@ -83,6 +83,10 @@ public:
     void poschar (const double &theta,
                              double &qR, double &aR,
                              double &cR, double &HpR);
+    double Hn (const int &i);
+    void negchar (const double &theta,
+                  double &qS, double &aS,
+                  double &cS, double &HnS);
     inline void Set_W1() {
         W1L = Q[0]/A[0]-4*c[0];
         W1R = Q[0]/A[0]+4*c[0];

@@ -328,48 +328,55 @@ void Artery::Bifur_Flux()
 }
 
 
-void Artery::Inlet_Flux(const double &T) {
-    double f, df, x, c, dx;
-    int proceed = 1, iter = 0;
-    double Q = Get_Q(T);
-    double tol = 1e-10;
+void Artery::Inlet_Flux(const double &T, const double &dt, const double &rk4c) {
     Element &start_el = el[0];
-    // set left edge riemann inviant
-    start_el.Set_W1();
-    x = start_el.A[0];
-    // init U, A use el.A, el.U => A_start, U_start
-    if( ( fabs(start_el.Q[0]/x) > start_el.c[0] ) ){
-        throw std::runtime_error("Error in BioFlux: Flow is not subsonic at inlet. \n");
-    }
-    while((proceed)&&(iter++ < MAX_ITER)){
-        // Calculate constraint vector and the wave speed at each vessel.
-        c  = start_el.Get_c(0, x);
-
-        f  = Q/x-4*c-start_el.W1L;
-        df = c/x-Q/pow(x,2.);   // olufsen
-//        df = -c/x-Q/pow(x,2.);
-        if( fabs(df) < SMALL ){
-            std::stringstream tmp;
-            tmp << "Error in Qinflow: zero derivative in the Newton's iteration. Iteration step is: "<< iter << ".\n";
-            throw std::runtime_error(tmp.str());
-        }
-        /* Solve the linear system by inverting analyticaly the Jacobian: g = (dfdv)^(-1)*f */
-        dx = f/df;
-
-        // Update solution: x_new = x_old - dx
-        x = x-dx;
-
-        // Check if the error of the solution is smaller than TOL.
-        if(fabs(dx) < tol/100) proceed = 0;
-//        if(fabs(f) < tol) proceed = 0;
-    }
-
-    if(iter >= MAX_ITER){
-        std::stringstream tmp;
-        tmp << "Error in inlet Riemann: iteration failed to converge. \n"<< iter << ".\n";
-        throw std::runtime_error(tmp.str());
-//        throw std::runtime_error("Error in inlet Riemann: iteration failed to converge. \n");
-    }
+    double Q = Get_Q(T*rk4c*dt);
+    double qS, aS, cS, HnS, uS;
+    qS = aS = cS = HnS = 0.0;
+    start_el.negchar(dt*(1+rk4c), qS, aS, cS, HnS);
+    uS = qS/aS;
+    double x   = aS + (Q - qS)/(uS + cS) + dt*(1+rk4c)*HnS;
+//    double f, df, x, c, dx;
+//    int proceed = 1, iter = 0;
+//    double Q = Get_Q(T);
+//    double tol = 1e-10;
+//    Element &start_el = el[0];
+//    // set left edge riemann inviant
+//    start_el.Set_W1();
+//    x = start_el.A[0];
+//    // init U, A use el.A, el.U => A_start, U_start
+//    if( ( fabs(start_el.Q[0]/x) > start_el.c[0] ) ){
+//        throw std::runtime_error("Error in BioFlux: Flow is not subsonic at inlet. \n");
+//    }
+//    while((proceed)&&(iter++ < MAX_ITER)){
+//        // Calculate constraint vector and the wave speed at each vessel.
+//        c  = start_el.Get_c(0, x);
+//
+//        f  = Q/x-4*c-start_el.W1L;
+//        df = c/x-Q/pow(x,2.);   // olufsen
+////        df = -c/x-Q/pow(x,2.);
+//        if( fabs(df) < SMALL ){
+//            std::stringstream tmp;
+//            tmp << "Error in Qinflow: zero derivative in the Newton's iteration. Iteration step is: "<< iter << ".\n";
+//            throw std::runtime_error(tmp.str());
+//        }
+//        /* Solve the linear system by inverting analyticaly the Jacobian: g = (dfdv)^(-1)*f */
+//        dx = f/df;
+//
+//        // Update solution: x_new = x_old - dx
+//        x = x-dx;
+//
+//        // Check if the error of the solution is smaller than TOL.
+//        if(fabs(dx) < tol/100) proceed = 0;
+////        if(fabs(f) < tol) proceed = 0;
+//    }
+//
+//    if(iter >= MAX_ITER){
+//        std::stringstream tmp;
+//        tmp << "Error in inlet Riemann: iteration failed to converge. \n"<< iter << ".\n";
+//        throw std::runtime_error(tmp.str());
+////        throw std::runtime_error("Error in inlet Riemann: iteration failed to converge. \n");
+//    }
 
     double U_star = Q/x;
     // visual edge
@@ -430,7 +437,7 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt,
 
     double uR = qR/aR;
 
-    double cst = (pterms - qR) / (cR -uR) - aR - HpR*dt;
+    double cst = (pterms - qR) / (cR -uR) - aR - HpR*dt*(1+rk4c);
     // The value of the function and the derivative is initialized to 0.
     double f,df,x,dx,c;
     x = end_el.A[Np-1];
@@ -736,7 +743,7 @@ void BioFlux(const int &nbrves, Artery *Arteries[],
     // Q0[i], i should get from mod
     // Q0 change with time can modified by add function not read from file
     // the first element of inlet, and dont need check Q and P,
-    Arteries[0]->Inlet_Flux((qLnb+rk4c)*dt);
+    Arteries[0]->Inlet_Flux(qLnb*dt,dt,rk4c);
     for (auto i: ID_Bif) {
         Arteries[i]->Bifur_Flux();
     }
