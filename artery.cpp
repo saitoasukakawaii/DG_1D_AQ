@@ -136,11 +136,21 @@ void Artery::local_CFL() {
 void Artery::Inter_Flux() {
     // dont deal with interface
     for (int j=1;j<N_e;++j) {
-        Riemann(el[j - 1], el[j], j, N_e);
-        el[j - 1].Set_F2();
-        el[j].Set_F1();
-        double dFA = (el[j - 1].FA2 - el[j].FA1);
-        double dFU = (el[j - 1].FU2 - el[j].FU1);
+        int N = el[j-1].Np;
+        double c1 = el[j-1].c[N-1];
+        double c2 = el[j].c[0];
+        double A1 = el[j-1].A[N-1];
+        double A2 = el[j].A[0];
+        double Q1 = el[j-1].Q[N-1];
+        double Q2 = el[j].Q[0];
+        double U1 = Q1/A1;
+        double U2 = Q2/A2;
+        double lambda = std::max(std::fabs(U1)+c1, std::fabs(U2)+c2);
+        el[j - 1].dFA2 = 0.5*( el[j-1].F_A[N-1]-el[j].F_A[0]+lambda*(A2-A1) );
+        el[j - 1].dFU2 = 0.5*( el[j-1].F_U[N-1]-el[j].F_U[0]+lambda*(Q2-Q1) );
+        el[j].dFA1 = 0.5*( el[j].F_A[0]-el[j-1].F_A[N-1]+lambda*(A2-A1) );
+        el[j].dFU1 = 0.5*( el[j].F_U[0]-el[j-1].F_U[N-1]+lambda*(Q2-Q1) );
+
 //        if ( dFA*dFA > TOL*100000 ) {
 //            std::stringstream tmp;
 //            tmp << "Error in BioFlux: Q does not balance at the interelement boundary.\n"
@@ -316,73 +326,101 @@ void Artery::Bifur_Flux()
 //        throw std::runtime_error(tmp.str());
 //    }
 
+    {
+        double Ud1 = x[1]/x[4];
+        double cd1 = eld1.Get_c(0,x[4]);
+        eld1.W1R = Ud1+4*cd1;
+        double Q1 = 2*x[1]-eld1.Q[0];
+        double Ud1_ = Q1/x[4];
+        double lambda1 = std::max(std::abs(Ud1) + cd1, std::abs(Ud1_) + cd1);
+        eld1.dFA1 = 0.5*( eld1.F_A[0]-x[1] );
+        eld1.dFU1 = 0.5*( (eld1.F_U[0]-eld1.Get_FU1(x[1],x[4]))+lambda1*(eld1.F_A[0]-x[1]) );
+    }
 
-    eld1.W1R = x[1]/x[4]+4*eld1.Get_c(0,x[4]);
-    RiemannStart(eld1,x[1],LD->ID);
+    {
+        double Ud2 = x[2] / x[5];
+        double cd2 = eld2.Get_c(0, x[5]);
+        eld2.W1R = Ud2 + 4 * cd2;
+        double Q2 = 2 * x[2] - eld2.Q[0];
+        double Ud2_ = Q2 / x[5];
+        double lambda2 = std::max(std::abs(Ud2) + cd2, std::abs(Ud2_) + cd2);
+        eld2.dFA1 = 0.5 * (eld2.F_A[0] - x[2]);
+        eld2.dFU1 = 0.5 * ((eld2.F_U[0] - eld2.Get_FU1(x[2], x[5])) + lambda2 * (eld2.F_A[0] - x[2]));
+    }
 
-    eld2.W1R = x[2]/x[5]+4*eld2.Get_c(0,x[5]);
-    RiemannStart(eld2,x[2],RD->ID);
+    {
+        double Up = x[0]/x[3];
+        double cp = elP.Get_c(N_,x[3]);
+        elP.W2L = Up-4*cp;
+        double Q3 = 2*x[0]-elP.Q[N_];
+        double Up_ = Q3/x[3];
+        double lambda = std::max(std::abs(Up) + cp, std::abs(Up_) + cp);
+        elP.dFA2 = 0.5*( (elP.F_A[N_]-x[0])+lambda*(x[3]-elP.A[N_]) );
+        elP.dFU2 = 0.5*( (elP.F_U[N_]-elP.Get_FU2(x[0],x[3]))+lambda*(x[0]-elP.F_A[N_]) );
+    }
 
-    elP.W2L = x[0]/x[3]-4*elP.Get_c(N_,x[3]);
-    RiemannEnd(elP,x[0],ID);
 }
 
 
 void Artery::Inlet_Flux(const double &T, const double &dt, const double &rk4c) {
     Element &start_el = el[0];
-    double Q = Get_Q(T*rk4c*dt);
-    double qS, aS, cS, HnS, uS;
-    qS = aS = cS = HnS = 0.0;
-    start_el.negchar(dt*(1+rk4c), qS, aS, cS, HnS);
-    uS = qS/aS;
-    double x   = aS + (Q - qS)/(uS + cS) + dt*(1+rk4c)*HnS;
-//    double f, df, x, c, dx;
-//    int proceed = 1, iter = 0;
-//    double Q = Get_Q(T);
-//    double tol = 1e-10;
-//    Element &start_el = el[0];
-//    // set left edge riemann inviant
-//    start_el.Set_W1();
-//    x = start_el.A[0];
-//    // init U, A use el.A, el.U => A_start, U_start
-//    if( ( fabs(start_el.Q[0]/x) > start_el.c[0] ) ){
-//        throw std::runtime_error("Error in BioFlux: Flow is not subsonic at inlet. \n");
-//    }
-//    while((proceed)&&(iter++ < MAX_ITER)){
-//        // Calculate constraint vector and the wave speed at each vessel.
-//        c  = start_el.Get_c(0, x);
-//
-//        f  = Q/x-4*c-start_el.W1L;
-//        df = c/x-Q/pow(x,2.);   // olufsen
-////        df = -c/x-Q/pow(x,2.);
-//        if( fabs(df) < SMALL ){
-//            std::stringstream tmp;
-//            tmp << "Error in Qinflow: zero derivative in the Newton's iteration. Iteration step is: "<< iter << ".\n";
-//            throw std::runtime_error(tmp.str());
-//        }
-//        /* Solve the linear system by inverting analyticaly the Jacobian: g = (dfdv)^(-1)*f */
-//        dx = f/df;
-//
-//        // Update solution: x_new = x_old - dx
-//        x = x-dx;
-//
-//        // Check if the error of the solution is smaller than TOL.
-//        if(fabs(dx) < tol/100) proceed = 0;
-////        if(fabs(f) < tol) proceed = 0;
-//    }
-//
-//    if(iter >= MAX_ITER){
-//        std::stringstream tmp;
-//        tmp << "Error in inlet Riemann: iteration failed to converge. \n"<< iter << ".\n";
-//        throw std::runtime_error(tmp.str());
-////        throw std::runtime_error("Error in inlet Riemann: iteration failed to converge. \n");
-//    }
+//    double Q = Get_Q(T+rk4c*dt);
+//    double qS, aS, cS, HnS, uS;
+//    qS = aS = cS = HnS = 0.0;
+//    start_el.negchar(dt*(1+rk4c), qS, aS, cS, HnS);
+//    uS = qS/aS;
+//    double x   = aS + (Q - qS)/(uS + cS) + dt*(1+rk4c)*HnS;
+    double f, df, x, c, dx;
+    int proceed = 1, iter = 0;
+    double Q = Get_Q(T+rk4c*dt);
+    double tol = 1e-10;
+    // set left edge riemann inviant
+    start_el.Set_W1();
+    x = start_el.A[0];
+    // init U, A use el.A, el.U => A_start, U_start
+    if( ( fabs(start_el.Q[0]/x) > start_el.c[0] ) ){
+        throw std::runtime_error("Error in BioFlux: Flow is not subsonic at inlet. \n");
+    }
+    while((proceed)&&(iter++ < MAX_ITER)){
+        // Calculate constraint vector and the wave speed at each vessel.
+        c  = start_el.Get_c(0, x);
+
+        f  = Q/x-4*c-start_el.W1L;
+        df = c/x-Q/pow(x,2.);   // olufsen
+//        df = -c/x-Q/pow(x,2.);
+        if( fabs(df) < SMALL ){
+            std::stringstream tmp;
+            tmp << "Error in Qinflow: zero derivative in the Newton's iteration. Iteration step is: "<< iter << ".\n";
+            throw std::runtime_error(tmp.str());
+        }
+        /* Solve the linear system by inverting analyticaly the Jacobian: g = (dfdv)^(-1)*f */
+        dx = f/df;
+
+        // Update solution: x_new = x_old - dx
+        x = x-dx;
+
+        // Check if the error of the solution is smaller than TOL.
+        if(fabs(dx) < tol/100) proceed = 0;
+//        if(fabs(f) < tol) proceed = 0;
+    }
+
+    if(iter >= MAX_ITER){
+        std::stringstream tmp;
+        tmp << "Error in inlet Riemann: iteration failed to converge. \n"<< iter << ".\n";
+        throw std::runtime_error(tmp.str());
+//        throw std::runtime_error("Error in inlet Riemann: iteration failed to converge. \n");
+    }
 
     double U_star = Q/x;
     // visual edge
     double local_c = start_el.Get_c(0,x);
     start_el.W1R = U_star + 4*local_c;
-    RiemannStart(start_el, Q, ID);
+
+    double Q1 = 2*Q-start_el.Q[0];
+    double U_star1 = Q1/x;
+    double lambda = std::max(std::abs(U_star) + local_c, std::abs(U_star1) + local_c);
+    start_el.dFA1 = 0.5*(start_el.F_A[0]-Q);
+    start_el.dFU1 = 0.5*( (start_el.F_U[0]-start_el.Get_FU1(Q,x))+lambda*(start_el.F_A[0]-Q) );
 }
 
 
@@ -409,7 +447,6 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt,
     // The remaining terms in the convolution present at the boundary,
     // see mathematical derivation.
     double pterms = 0.0;
-
     double Unit_Y = q/rho/g/Lr;
     if (n_step > constants::tmstps)
     {
@@ -428,33 +465,21 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt,
             << "Current element is: " << ID+1 << ".\n";
         throw std::runtime_error(tmp.str());
     }
-    double qR = 0.0;
-    double aR = 0.0;
-    double cR = 0.0;
-    double HpR = 0.0;
-
-    end_el.poschar(dt*(1+rk4c), qR, aR, cR, HpR);
-
-    double uR = qR/aR;
-
-    double cst = (pterms - qR) / (cR -uR) - aR - HpR*dt*(1+rk4c);
     // The value of the function and the derivative is initialized to 0.
     double f,df,x,dx,c;
     x = end_el.A[Np-1];
     // y is non-dimension, need dimension
     while ((proceed)&&(iter++ < MAX_ITER))
     {
-//        c = end_el.Get_c(Np-1, x);
-//        double Q = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms;
-//        f = Q/x+4*c-end_el.W2R;
-//        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)-c/x;  // olufsen
+        c = end_el.Get_c(Np-1, x);
+        double Q = dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms;
+        f = Q/x+4*c-end_el.W2R;
+        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)-c/x;  // olufsen
 //        df = dt*y[0]*Unit_Y*c*c*rho/pow(x,2.)-Q/pow(x,2.)+c/x;
 //        f = Q+4*c*x-end_el.W2R*x;
 //        df = dt*y[0]*Unit_Y*c*c*rho/x+3*c-end_el.W2R*x;  // olufsen
 
         // like olufsen:
-        f = x+cst+y[0]*Unit_Y*dt*end_el.Get_P(Np-1, x)/(cR-uR);
-        df = 1+y[0]*Unit_Y*dt*c*c*rho/x/(cR-uR);
         if( fabs(df) < SMALL ){
             throw std::runtime_error("Error in SmallTree outflow: zero derivative in the Newton's iteration.\n");
         }
@@ -483,8 +508,15 @@ void Artery::Terminal_Flux(const int &n_step, const int &qLnb, const double &dt,
         throw std::runtime_error(tmp.str());
     }
     double Qstar = (dt*y[0]*Unit_Y*end_el.Get_P(Np-1, x)+pterms);
-    end_el.W2L = (Qstar/x-4*end_el.Get_c(Np-1,x));
-    RiemannEnd(end_el,Qstar,ID);
+    double U_star = Qstar/x;
+    double local_c = end_el.Get_c(Np-1,x);
+    end_el.W2L = (Qstar/x-4*local_c);
+    // visual edge
+    double Q1 = 2*Qstar-end_el.Q[Np-1];
+    double U_star1 = Q1/x;
+    double lambda = std::max(std::abs(U_star) + local_c, std::abs(U_star1) + local_c);
+    end_el.dFA2 = 0.5*( (end_el.F_A[Np-1]-Qstar)+lambda*(x-end_el.A[Np-1]) );
+    end_el.dFU2 = 0.5*( (end_el.F_U[Np-1]-end_el.Get_FU2(Qstar,x))+lambda*(Qstar-end_el.F_A[Np-1]) );
 
 
 //    ****************************
@@ -754,242 +786,7 @@ void BioFlux(const int &nbrves, Artery *Arteries[],
     {
         Arteries[i]->Inter_Flux();
     }
-
 }
-//
-//
-void RiemannStart(Element &start_el, const double &Q_star, const int &ID){
-    // then use 4 value to solve the A1,A2,U1,U2
-    double cl,cr,k1,k2,k;
-//    double x[4], f[4], dx[4];
-//    double inv_J[4][4];
-    VectorXd x(4), dx(4), f(4);
-    MatrixXd J(4,4);
-    int proceed =1,iter=0;
-    if( (fabs(start_el.Q[0]/start_el.A[0]) > start_el.c[0]) )
-    {
-        std::string Error = "Error in IntletFlux: Flow is not subsonic in domain: "+std::to_string(ID+1)+".\n";
-        throw std::runtime_error(Error);
-    }
-    x[0] = start_el.Q[0];
-    x[1] = 2*Q_star-start_el.Q[0];
-    x[2] = start_el.A[0];
-    x[3] = start_el.A[0];
-    while((proceed)&&(iter++ < MAX_ITER)){
-        // Calculate constraint vector and the wave speed at each vessel.
-
-        cl   = start_el.Get_c(0, x[2]);
-        cr   = start_el.Get_c(0, x[3]);
-        // x(0): UL, x(1): UR, x(2): AL, x(3): AR
-        // Inverse Jacobian matrix dfdv
-
-        f[0] = x[0]/x[2] + 4*cl - start_el.W1R;
-        f[1] = x[1]/x[3] - 4*cr - start_el.W1L;
-        f[2] = x[0]-x[1];
-        f[3] = 0.5*rho*(x[0]/x[2],2.)+start_el.Get_P(0,x[2])
-              -0.5*rho*(x[1]/x[3],2.)-start_el.Get_P(0,x[3]);
-
-        // x(0): UL, x(1): UR, x(2): AL, x(3): AR
-        // Inverse Jacobian matrix dfdv
-
-        J(0,0) = 1/x[2];
-        J(0,1) = 0;
-        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
-//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
-        J(0,3) = 0;
-
-        J(1,0) = 0;
-        J(1,1) = 1/x[3];
-        J(1,2) = 0;
-        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olufsen
-//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
-
-        J(2,0) =  1;
-        J(2,1) = -1;
-        J(2,2) = 0;
-        J(2,3) = 0;
-
-        J(3,0) =  rho*x[0]/pow(x[2],2.);
-        J(3,1) = -rho*x[1]/pow(x[3],2.);
-        J(3,2) = -rho*( pow(x[0],2.)/pow(x[2],3.)-pow(cl,2.)/x[2] );
-        J(3,3) =  rho*( pow(x[1],2.)/pow(x[3],3.)-pow(cr,2.)/x[3] );
-
-        /* Solve the linear system by inverting analyticaly the Jacobian: g = (dfdv)^(-1)*f */
-        dx = J.partialPivLu().solve(f);
-        // Update solution: x_new = x_old - dx
-        x = x-dx;
-
-        // Check if the error of the solution is smaller than TOL.
-//        if( dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]+dx[3]*dx[3] < TOL )      proceed = 0;
-        if( (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]+f[3]*f[3]) < TOL )      proceed = 0;
-    }
-    start_el.A1 = x[3];
-    start_el.Q1 = x[1];
-    start_el.Set_F1();
-}
-
-void RiemannEnd(Element &end_el, const double &Q_star, const int &ID){
-    // then use 4 value to solve the A1,A2,U1,U2
-    double cl,cr,k1,k2,k;
-//    double x[4], f[4], dx[4];
-//    double inv_J[4][4];
-    VectorXd x(4), dx(4), f(4);
-    MatrixXd J(4,4);
-    int proceed =1,iter=0;
-    int Np = end_el.Np;
-    if( (fabs(end_el.Q[Np-1]/end_el.A[Np-1]) > end_el.c[Np-1]) )
-    {
-        std::string Error = "Error in outletFlux: Flow is not subsonic in domain: "+std::to_string(ID+1)+".\n";
-        throw std::runtime_error(Error);
-    }
-    x[0] = end_el.Q[Np-1];
-    x[1] = 2*Q_star-end_el.Q[Np-1];
-    x[2] = end_el.A[Np-1];
-    x[3] = end_el.A[Np-1];
-    while((proceed)&&(iter++ < MAX_ITER)){
-        // Calculate constraint vector and the wave speed at each vessel.
-
-        cl   = end_el.Get_c(Np-1, x[2]);
-        cr   = end_el.Get_c(Np-1, x[3]);
-
-        // x(0): UL, x(1): UR, x(2): AL, x(3): AR
-        // Inverse Jacobian matrix dfdv
-
-        f[0] = x[0]/x[2] + 4*cl - end_el.W2R;
-        f[1] = x[1]/x[3] - 4*cr - end_el.W2L;
-        f[2] = x[0]-x[1];
-        f[3] = 0.5*rho*(x[0]/x[2],2.)+end_el.Get_P(Np-1,x[2])
-              -0.5*rho*(x[1]/x[3],2.)-end_el.Get_P(Np-1,x[3]);
-
-        // x(0): UL, x(1): UR, x(2): AL, x(3): AR
-        // Inverse Jacobian matrix dfdv
-
-        J(0,0) = 1/x[2];
-        J(0,1) = 0;
-        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];    // olufsen
-//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
-        J(0,3) = 0;
-
-        J(1,0) = 0;
-        J(1,1) = 1/x[3];
-        J(1,2) = 0;
-        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];    // olfusen
-//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
-
-        J(2,0) =  1;
-        J(2,1) = -1;
-        J(2,2) = 0;
-        J(2,3) = 0;
-
-        J(3,0) =  rho*x[0]/pow(x[2],2.);
-        J(3,1) = -rho*x[1]/pow(x[3],2.);
-        J(3,2) = -rho*( pow(x[0],2.)/pow(x[2],3.)-pow(cl,2.)/x[2] );
-        J(3,3) =  rho*( pow(x[1],2.)/pow(x[3],3.)-pow(cr,2.)/x[3] );
-
-        /* Solve the linear system by inverting analyticaly the Jacobian: g = (dfdv)^(-1)*f */
-        dx = J.partialPivLu().solve(f);
-        // Update solution: x_new = x_old - dx
-        x = x-dx;
-
-        // Check if the error of the solution is smaller than TOL.
-//        if( dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]+dx[3]*dx[3] < TOL )      proceed = 0;
-        if( (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]+f[3]*f[3]) < TOL )      proceed = 0;
-    }
-    end_el.A2 = x[2];
-    end_el.Q2 = x[0];
-    end_el.Set_F2();
-}
-
-void Riemann(Element &el1, Element &el2, const int &j, const int &N_e)
-{
-    // f: function g: delta_x,
-    // x: x_new = x_old+delta_x
-    // inv_j: inv of f'
-//    long double f[4],dx[4],x[4];
-//    long double inv_J[4][4];
-    VectorXd f(4), dx(4), x(4);
-    MatrixXd J(4,4);
-    long double cl, cr, k1, k2, k;
-    int proceed = 1, iter = 0;
-    // left element, use right edge use W2R
-    el1.Set_W2();
-    // right element, use left edge use W1L
-    el2.Set_W1();
-    int N_ = el1.Np-1;
-    // Check if flow is subsonic
-    if( (fabs(el1.Q[N_]/el1.A[N_]) > el1.c[N_]) || (fabs(el2.Q[0]/el2.A[0]) > el2.c[0]) )
-    {
-        std::stringstream tmp;
-        tmp << "Error in InterFlux: Flow is not subsonic. \n"
-            << "Element is: " << j-1 << " and " << j << ".\n"
-            << "The number of element is: " << N_e << ".\n";
-        throw std::runtime_error(tmp.str());
-    }
-    x[0] = el1.Q[N_];
-    x[1] = el2.Q[0];
-    x[2] = el1.A[N_];
-    x[3] = el2.A[0];
-    while((proceed)&&(iter++ < MAX_ITER)){
-        // Calculate constraint vector and the wave speed at each vessel.
-
-        cl   = el1.Get_c(N_, x[2]);
-        cr   = el2.Get_c(0, x[3]);
-
-        f[0] = x[0]/x[2] + 4*cl - el1.W2R;
-        f[1] = x[1]/x[3] - 4*cr - el2.W1L;
-        f[2] = x[0]-x[1];
-        f[3] = 0.5*rho*(x[0]/x[2],2.)+el1.Get_P(N_,x[2])
-              -0.5*rho*(x[1]/x[3],2.)-el2.Get_P(0,x[3]);
-
-        // x(0): UL, x(1): UR, x(2): AL, x(3): AR
-        // Inverse Jacobian matrix dfdv
-
-        J(0,0) = 1/x[2];
-        J(0,1) = 0;
-        J(0,2) = -x[0]/pow(x[2],2.)-cl/x[2];  // olufsen
-//        J(0,2) = -x[0]/pow(x[2],2.)+cl/x[2];
-        J(0,3) = 0;
-
-        J(1,0) = 0;
-        J(1,1) = 1/x[3];
-        J(1,2) = 0;
-        J(1,3) = -x[1]/pow(x[3],2.)+cr/x[3];  // olufsen
-//        J(1,3) = -x[1]/pow(x[3],2.)-cr/x[3];
-
-        J(2,0) =  1;
-        J(2,1) = -1;
-        J(2,2) = 0;
-        J(2,3) = 0;
-
-        J(3,0) =  rho*x[0]/pow(x[2],2.);
-        J(3,1) = -rho*x[1]/pow(x[3],2.);
-        J(3,2) = -rho*( pow(x[0],2.)/pow(x[2],3.)-pow(cl,2.)/x[2] );
-        J(3,3) =  rho*( pow(x[1],2.)/pow(x[3],3.)-pow(cr,2.)/x[3] );
-
-        /* Solve the linear system by inverting analyticaly the Jacobian: g = (dfdv)^(-1)*f */
-        dx = J.partialPivLu().solve(f);
-        // Update solution: x_new = x_old - dx
-        x = x-dx;
-
-        // Check if the error of the solution is smaller than TOL.
-        if( (dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]+dx[3]*dx[3]) < TOL )      proceed = 0;
-//        if( (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]+f[3]*f[3]) < TOL )      proceed = 0;
-    }
-
-    if(iter >= MAX_ITER){
-        std::stringstream tmp;
-        tmp << "Error in Riemann: iteration failed to converge. \n"
-            << "The L2 norm is: " << dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]+dx[3]*dx[3] << ".\n"
-//                << "The L2 norm is: " << f[0]*f[0]+f[1]*f[1]+f[2]*f[2]+f[3]*f[3] << ".\n"
-            << "Element is: " << j-1 << " and " << j << ".\n";
-        throw std::runtime_error(tmp.str());
-    }
-    el1.Q2 = double(x[0]);              // left element U*L
-    el2.Q1 = double(x[1]);              // right element U*R
-    el1.A2 = double(x[2]);              // left element A*L
-    el2.A1 = double(x[3]);              // right element A*R
-}
-//
 
 
 void solver(const int &nbrves, Artery *Arteries[], int &n_step,

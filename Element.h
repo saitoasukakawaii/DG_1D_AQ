@@ -45,10 +45,10 @@ public:
             P, phi,                     // pressure
             c,c0;                 // wave speed
 
-    double   FA1, FA2,              // upwind flux 1 for left edge, 2 for right edge
-             FU1, FU2;              // A for continuous U for momentum
-    double   A1, A2,                // use for numerical flux
-             Q1, Q2;                //
+//    double   FA1, FA2,              // upwind flux 1 for left edge, 2 for right edge
+//             FU1, FU2;              // A for continuous U for momentum
+    double   dFA1, dFA2,                // use for numerical flux
+             dFU1, dFU2;                //
     double   W1L, W1R,              // riemann L for left backward, R for right forward.
              W2L, W2R;              // 1 for left edge, 2 for right edge
 
@@ -75,18 +75,18 @@ public:
     double Get_phi(const int &i, const double &A_);
     void Set_F();
     void Set_S();
-    void Set_F1();
-    void Set_F2();
+    double Get_FU1(const double &Q, const double &A) {return Q*Q/A +Get_phi(0, A);};
+    double Get_FU2(const double &Q, const double &A) {return Q*Q/A +Get_phi(Np-1, A);};
     void Set_RHS();
     double Get_dpdx(const int &i);
-    double Hp (const int &i);
-    void poschar (const double &theta,
-                             double &qR, double &aR,
-                             double &cR, double &HpR);
-    double Hn (const int &i);
-    void negchar (const double &theta,
-                  double &qS, double &aS,
-                  double &cS, double &HnS);
+//    double Hp (const int &i);
+//    void poschar (const double &theta,
+//                             double &qR, double &aR,
+//                             double &cR, double &HpR);
+//    double Hn (const int &i);
+//    void negchar (const double &theta,
+//                  double &qS, double &aS,
+//                  double &cS, double &HnS);
     inline void Set_W1() {
         W1L = Q[0]/A[0]-4*c[0];
         W1R = Q[0]/A[0]+4*c[0];

@@ -132,12 +132,7 @@ public:
 void BioFlux(const int &nbrves, Artery *Arteries[],
              const std::set<int>& ID_Bif, const std::set<int>& ID_Out,
              const int &n_step, const int &qLnb, const double &dt, const double &rk4c);
-// solving Riemann problem for interface of two elements
-void Riemann(Element &el1, Element &el2, const int &j, const int &N_e);
-// solving Riemann problem for the element at the start of the artery
-void RiemannStart(Element &start_el, const double &Q_star, const int &ID);
-// solving Riemann problem for the element at the end of the artery
-void RiemannEnd(Element &end_el, const double &Q_star, const int &ID);
+
 void solver(const int &nbrves, Artery *Arteries[], int &n_step,
             const double &tstart, const double &tend, const double &dt,
             const std::set<int>& ID_Out, const std::set<int>& ID_Bif);

@@ -185,24 +185,11 @@ void Element :: Set_S() {
     }
 }
 
-void Element :: Set_F1() {
-    FA1 = Q1;
-    FU1 = Q1*Q1/A1 + Get_phi(0, A1);
-}
-
-void Element :: Set_F2() {
-    FA2 = Q2;
-    FU2 = Q2*Q2/A2 + Get_phi(Np-1, A2);
-}
 
 // U^{n+1} = U^{n}+dt*f, set f
 void Element :: Set_RHS() {
     auto Lp1 = constants::jac.invM(all, 0);
     auto Lp2 = constants::jac.invM(all, Np - 1);
-    double dFA1 = F_A[0] - FA1;
-    double dFA2 = F_A[Np - 1] - FA2;
-    double dFU1 = F_U[0] - FU1;
-    double dFU2 = F_U[Np - 1] - FU2;
     double dFAdx[Np];
     double dFUdx[Np];
     for (int i = 0; i < Np; ++i) {
@@ -232,55 +219,55 @@ void Element :: Update (const double &a,
 }
 
 
-double Element :: Hp (const int &i)
-{
-    assert(i >= 0 && i < Np);
-    return (F_c * Q[i] / A[i] - A[i]*Get_dpdx(i)/rho) / (-Q[i]/A[i] + c[i]);
-}
-double Element :: Hn (const int &i)
-{
-    assert(i >= 0 && i < Np);
-    return (F_c * Q[i] / A[i] - A[i]*Get_dpdx(i)/rho) / (-Q[i]/A[i] - c[i]);
-}
-
-void Element :: poschar (const double &theta,
-                         double &qR, double &aR,
-                         double &cR, double &HpR)
-{
-    double ctm1  = c  [Np-1];
-    double Hptm1 = Hp (Np-1);
-    double uR    = Q[Np-1] / A[Np-1];
-    double ch    = (uR + ctm1) * theta;
-
-    if (uR + ctm1 < 0)
-    {
-        throw("uR + ctm1 < 0, CFL condition violated\n");
-    }
-
-    qR  = Q[Np-1] - (Q[Np-1] - Q[Np-2])*ch;
-    aR  = A[Np-1] - (A[Np-1] - A[Np-2])*ch;
-    cR  = ctm1    - (ctm1  - c [Np-2])*ch;
-    HpR = Hptm1   - (Hptm1 - Hp(Np-2))*ch;
-}
-
-void Element :: negchar (const double &theta,
-                         double &qS, double &aS,
-                         double &cS, double &HnS)
-{
-    double ctm1  = c[0];
-    double Hntm1 = Hn(0);
-    double uS    = Q[0]/A[0];
-    double ch    = (uS - ctm1) * theta;
-
-    if ( ctm1 - uS < 0)
-    {
-        throw("ctm1 - uS < 0, CFL condition violated\n");
-    }
-
-    qS  = Q[0] + (Q[0] - Q[1])*ch;
-    aS  = A[0] + (A[0] - A[1])*ch;
-    cS  = ctm1    + (ctm1  - c [1])*ch;
-    HnS = Hntm1   + (Hntm1 - Hn(1))*ch;
-}
+//double Element :: Hp (const int &i)
+//{
+//    assert(i >= 0 && i < Np);
+//    return (F_c * Q[i] / A[i] - A[i]*Get_dpdx(i)/rho) / (-Q[i]/A[i] + c[i]);
+//}
+//double Element :: Hn (const int &i)
+//{
+//    assert(i >= 0 && i < Np);
+//    return (F_c * Q[i] / A[i] - A[i]*Get_dpdx(i)/rho) / (-Q[i]/A[i] - c[i]);
+//}
+//
+//void Element :: poschar (const double &theta,
+//                         double &qR, double &aR,
+//                         double &cR, double &HpR)
+//{
+//    double ctm1  = c  [Np-1];
+//    double Hptm1 = Hp (Np-1);
+//    double uR    = Q[Np-1] / A[Np-1];
+//    double ch    = (uR + ctm1) * theta;
+//
+//    if (uR + ctm1 < 0)
+//    {
+//        throw("uR + ctm1 < 0, CFL condition violated\n");
+//    }
+//
+//    qR  = Q[Np-1] - (Q[Np-1] - Q[Np-2])*ch;
+//    aR  = A[Np-1] - (A[Np-1] - A[Np-2])*ch;
+//    cR  = ctm1    - (ctm1  - c [Np-2])*ch;
+//    HpR = Hptm1   - (Hptm1 - Hp(Np-2))*ch;
+//}
+//
+//void Element :: negchar (const double &theta,
+//                         double &qS, double &aS,
+//                         double &cS, double &HnS)
+//{
+//    double ctm1  = c[0];
+//    double Hntm1 = Hn(0);
+//    double uS    = Q[0]/A[0];
+//    double ch    = (uS - ctm1) * theta;
+//
+//    if ( ctm1 - uS < 0)
+//    {
+//        throw("ctm1 - uS < 0, CFL condition violated\n");
+//    }
+//
+//    qS  = Q[0] + (Q[0] - Q[1])*ch;
+//    aS  = A[0] + (A[0] - A[1])*ch;
+//    cS  = ctm1    + (ctm1  - c [1])*ch;
+//    HnS = Hntm1   + (Hntm1 - Hn(1))*ch;
+//}
 
 
